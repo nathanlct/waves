@@ -54,6 +54,9 @@ class Simulation:
         
         self.save_data()
 
+    def get_obs(self):
+        return np.array([self.t, self.y[len(self.y) // 2]])
+
     def render(self, path=None):
         """
         Renders the evolution of y since t=0 (ie since the last reset).
@@ -97,10 +100,10 @@ if __name__ == '__main__':
     )
 
     sim.reset(
-        y0=lambda x: (x*x *x * np.sin(x * np.pi * 2.0) ) * 0.499
+        y0=lambda x: np.sin(x * np.pi * 2.0) * 0.499
     )
 
     while sim.t < 5.0:
-        sim.step()
+        sim.step(-1)
 
     sim.render(path='test.gif')
