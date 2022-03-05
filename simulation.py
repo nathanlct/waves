@@ -103,4 +103,4 @@ if __name__ == '__main__':
     while sim.t < 5.0:
         sim.step()
 
-    sim.render(path='main.gif')
+    sim.render(path='test.gif')
