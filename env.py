@@ -23,10 +23,6 @@ class WaveEnv(gym.Env):
             xmax=1,
         )
 
-        self.state_buffer_size = 3
-        self.state_append_every = 1
-        self.state_append_counter = 0
-
         self.sim.reset(
             y0=lambda x: np.sin(x * np.pi * 2.0) * 0.499
         )
@@ -45,13 +41,17 @@ class WaveEnv(gym.Env):
         self.state[:2] = self.sim.get_obs()
         
         # compute reward
-        reward = max(-10, - np.mean(np.abs(self.sim.y)))
+        reward = max(-10, -self.sim.norm_y())
 
         # compute done
         done = self.sim.t >= 2.0
 
+        # log infos
+        infos = {}
+        if done:
+            infos['done_norm_y'] = self.sim.norm_y()
 
-        return self.state, reward, done, {}
+        return self.state, reward, done, infos
 
     def reset(self):
         self.sim.reset()

@@ -57,6 +57,9 @@ class Simulation:
     def get_obs(self):
         return np.array([self.t, self.y[len(self.y) // 2]])
 
+    def norm_y(self):
+        return (self.dx * np.sum(self.y * self.y)) ** 0.5
+
     def render(self, path=None):
         """
         Renders the evolution of y since t=0 (ie since the last reset).
