@@ -8,7 +8,7 @@ class WaveEnv(gym.Env):
     def __init__(self):
         super(WaveEnv, self).__init__()
 
-        self.state_buffer_size = 100
+        self.state_buffer_size = 200
         self.state_append_every = 10
         self.state_append_counter = 0
 
@@ -52,7 +52,6 @@ class WaveEnv(gym.Env):
         done = self.sim.t >= 2.0
 
         # log infos
-        infos = {}
         if done:
             infos['done_norm_y'] = self.sim.norm_y()
 
@@ -60,9 +59,11 @@ class WaveEnv(gym.Env):
 
     def reset(self):
         self.sim.reset()
+
         self.state = np.zeros(1 + self.state_buffer_size)
         self.state[:2] = self.sim.get_obs()
         self.state_append_counter = 1 if self.state_append_every > 1 else 0
+
         return self.state
 
 
