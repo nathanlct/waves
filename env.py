@@ -29,6 +29,11 @@ class WaveEnv(gym.Env):
         self.reset()
 
     def step(self, action):
+        # log infos
+        infos = {}
+        if self.sim.t == 0:
+            infos['init_norm_y'] = self.sim.norm_y()
+
         # sim step
         self.sim.step(u=action)
 
