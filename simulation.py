@@ -25,7 +25,7 @@ class Simulation:
         self.y0 = None
 
     def reset(self, y0=None):
-        if self.y0 is None and y0 is not None:
+        if y0 is not None:
             self.y0 = y0
 
         self.t = 0
