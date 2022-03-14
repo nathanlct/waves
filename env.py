@@ -8,7 +8,7 @@ class WaveEnv(gym.Env):
     def __init__(self):
         super(WaveEnv, self).__init__()
 
-        self.state_buffer_size = 200
+        self.state_buffer_size = 500
         self.state_append_every = 10
         self.state_append_counter = 0
 
@@ -45,10 +45,22 @@ class WaveEnv(gym.Env):
 
         return self.state, reward, done, {}
 
-        return self.state, reward, done, infos
+    def reset(self, y0=None):
+        if y0 is None:
+            # generate an initial condition y0 = sum_n a_n sin(nx) + bn cos(nx)
+            # with sum_n (a_n + b_n) < 0.2
+            n = 100
+            a_lst = np.random.random(n)
+            b_lst = np.random.random(n)
+            norm_coef = 5.0 / (np.sum(a_lst) + np.sum(b_lst))
+            a_lst *= norm_coef
+            b_lst *= norm_coef
+            n_lst = np.arange(n)
+            self.y0 = lambda x: np.sum(a_lst * np.sin(n_lst * x) + b_lst * np.cos(n_lst * x))
+        else:
+            self.y0 = y0
 
-    def reset(self):
-        self.sim.reset()
+        self.sim.reset(y0=self.y0)
 
         self.state = np.zeros(1 + self.state_buffer_size)
         self.state[:2] = self.sim.get_obs()
