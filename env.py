@@ -19,13 +19,10 @@ class WaveEnv(gym.Env):
             f=lambda x: x*x + x,
             dt=1e-3,
             dx=1e-2,
-            xmin=0,
-            xmax=1,
+            xmin=0.5,
+            xmax=1.5,
         )
 
-        self.sim.reset(
-            y0=lambda x: np.sin(x * np.pi * 2.0) * 0.499
-        )
         self.reset()
 
     def step(self, action):
