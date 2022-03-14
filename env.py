@@ -26,11 +26,6 @@ class WaveEnv(gym.Env):
         self.reset()
 
     def step(self, action):
-        # log infos
-        infos = {}
-        if self.sim.t == 0:
-            infos['init_norm_y'] = self.sim.norm_y()
-
         # sim step
         self.sim.step(u=action)
 
@@ -48,9 +43,7 @@ class WaveEnv(gym.Env):
         # compute done
         done = self.sim.t >= 2.0
 
-        # log infos
-        if done:
-            infos['done_norm_y'] = self.sim.norm_y()
+        return self.state, reward, done, {}
 
         return self.state, reward, done, infos
 
