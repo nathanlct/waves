@@ -74,7 +74,7 @@ if __name__ == '__main__':
 
     state = env.reset()
     while True:
-        state, reward, done, _= env.step(-1)
+        state, reward, done, _ = env.step(-1)
         print(reward)
         if done:
             break
