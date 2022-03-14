@@ -27,3 +27,4 @@ model.learn(total_timesteps=500000, callback=TensorboardCallback())
 
 # save model
 model.save(exp_dir / 'model')
+print(f'Done, experiment data saved at {exp_dir}')
