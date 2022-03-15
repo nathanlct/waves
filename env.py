@@ -8,19 +8,20 @@ class WaveEnv(gym.Env):
     def __init__(self):
         super(WaveEnv, self).__init__()
 
-        self.state_buffer_size = 1000
+        self.state_buffer_size = 100
         self.state_append_every = 2
         self.state_append_counter = 0
 
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(1 + self.state_buffer_size,), dtype=np.float32)
+        self.observation_space = spaces.Box(
+            low=-np.inf,
+            high=np.inf,
+            shape=(1 + self.state_buffer_size,),
+            dtype=np.float32,
+        )
 
         self.sim = Simulation(
-            f=lambda x: x*x + x,
-            dt=1e-2,
-            dx=1e-2,
-            xmin=0.5,
-            xmax=1.5,
+            f=lambda x: x + 1e-3 * (x * x), dt=0.95 * 1e-2, dx=1e-2, xmin=0.5, xmax=1.5,
         )
 
         self.reset()
@@ -36,7 +37,7 @@ class WaveEnv(gym.Env):
             # roll previous states buffer
             self.state[2:] = self.state[1:-1]
         self.state[:2] = self.sim.get_obs()
-        
+
         # compute reward
         reward = max(-10, -self.sim.norm_y())
 
@@ -56,7 +57,9 @@ class WaveEnv(gym.Env):
             a_lst *= norm_coef
             b_lst *= norm_coef
             n_lst = np.arange(n)
-            self.y0 = lambda x: np.sum(a_lst * np.sin(n_lst * x) + b_lst * np.cos(n_lst * x))
+            self.y0 = lambda x: np.sum(
+                a_lst * np.sin(n_lst * x) + b_lst * np.cos(n_lst * x)
+            )
         else:
             self.y0 = y0
 
@@ -69,7 +72,7 @@ class WaveEnv(gym.Env):
         return self.state
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     env = WaveEnv()
 
     state = env.reset()

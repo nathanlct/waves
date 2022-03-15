@@ -14,13 +14,14 @@ class Simulation:
     
     for some control u
     """
+
     def __init__(self, f, dt, dx, xmin, xmax):
         self.dt = dt
         self.dx = dx
 
         self.xmin = xmin
         self.xmax = xmax
-        
+
         self.f = f
         self.y0 = None
 
@@ -36,22 +37,22 @@ class Simulation:
         self.save_data()
 
     def save_data(self):
-        self.data['t'].append(self.t)
-        self.data['x'].append(np.copy(self.x))
-        self.data['y'].append(np.copy(self.y))
+        self.data["t"].append(self.t)
+        self.data["x"].append(np.copy(self.x))
+        self.data["y"].append(np.copy(self.y))
 
     def step(self, u=0):
         self.t += self.dt
 
         # initial condition with control u
-        self.y[0] = self.y[-1] + u
+        self.y[0] = self.y[-1] + u  # - 0.2 * self.y[len(self.y) // 2] + u
 
         # compute df(y)/dx
         self.yx = np.diff(self.f(self.y)) / self.dx
 
         # dy/dt + df(y)/dx = 0  =>  y(t+dt) = y(t) - dt * df(y)/dx
         self.y[1:] -= self.dt * self.yx
-        
+
         self.save_data()
 
     def get_obs(self):
@@ -68,23 +69,25 @@ class Simulation:
         """
         fig = plt.figure()
 
-        y_line = plt.plot(self.data['x'][0], self.data['y'][0])[0]
-        time_label = plt.text(0.8, 0.9, '', fontsize=10, transform=fig.axes[0].transAxes)
+        y_line = plt.plot(self.data["x"][0], self.data["y"][0])[0]
+        time_label = plt.text(
+            0.8, 0.9, "", fontsize=10, transform=fig.axes[0].transAxes
+        )
 
         def animate(i):
-            y_line.set_data(self.data['x'][i], self.data['y'][i])
+            y_line.set_data(self.data["x"][i], self.data["y"][i])
             time_label.set_text(f't = {self.data["t"][i]:.3f} s')
             return [y_line, time_label]
 
         anim_fps = 30
         anim = animation.FuncAnimation(
             fig=fig,
-            func=animate, 
-            frames=range(0, len(self.data['t']), int(1 / (self.dt * anim_fps))),
-            interval=1000/anim_fps,
+            func=animate,
+            frames=range(0, len(self.data["t"]), int(1 / (self.dt * anim_fps))),
+            interval=1000 / anim_fps,
             repeat=True,
             repeat_delay=500,
-            blit=True, 
+            blit=True,
         )
 
         if path is None:
@@ -93,20 +96,12 @@ class Simulation:
             anim.save(path)
 
 
-if __name__ == '__main__':
-    sim = Simulation(
-        f=lambda x: x*x + x,
-        dt=1e-3,
-        dx=1e-2,
-        xmin=0,
-        xmax=1,
-    )
+if __name__ == "__main__":
+    sim = Simulation(f=lambda x: x * x + x, dt=0.3 * 1e-3, dx=1e-3, xmin=0, xmax=1,)
 
-    sim.reset(
-        y0=lambda x: np.sin(x * np.pi * 2.0) * 0.499
-    )
+    sim.reset(y0=lambda x: np.cos(x * np.pi * 8.0) * 0.01)
 
-    while sim.t < 5.0:
-        sim.step(-1)
+    while sim.t < 40.0:
+        sim.step(0)
 
-    sim.render(path='test.gif')
+    sim.render(path="test.gif")
