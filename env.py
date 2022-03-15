@@ -8,8 +8,8 @@ class WaveEnv(gym.Env):
     def __init__(self):
         super(WaveEnv, self).__init__()
 
-        self.state_buffer_size = 500
-        self.state_append_every = 10
+        self.state_buffer_size = 1000
+        self.state_append_every = 2
         self.state_append_counter = 0
 
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
@@ -17,7 +17,7 @@ class WaveEnv(gym.Env):
 
         self.sim = Simulation(
             f=lambda x: x*x + x,
-            dt=1e-3,
+            dt=1e-2,
             dx=1e-2,
             xmin=0.5,
             xmax=1.5,
@@ -41,7 +41,7 @@ class WaveEnv(gym.Env):
         reward = max(-10, -self.sim.norm_y())
 
         # compute done
-        done = self.sim.t >= 2.0
+        done = self.sim.t >= 10.0
 
         return self.state, reward, done, {}
 
