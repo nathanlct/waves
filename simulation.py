@@ -47,7 +47,7 @@ class Simulation:
         self.y[0] = self.y[-1] + u
 
         # compute df(y)/dx
-        self.yx = np.diff(self.y) / self.dx
+        self.yx = np.diff(self.f(self.y)) / self.dx
 
         # dy/dt + df(y)/dx = 0  =>  y(t+dt) = y(t) - dt * df(y)/dx
         self.y[1:] -= self.dt * self.yx
