@@ -4,7 +4,7 @@ from stable_baselines3 import PPO
 from env import WaveEnv
 
 # load trained model
-model = PPO.load('/home/nathan/dev/waves/logs/1646495569_05Mar22_16h52m49s/model')
+model = PPO.load("/Users/hayat/waves/logs/1647360415_15Mar22_17h06m55s/model")
 
 # create env
 env = WaveEnv()
@@ -16,4 +16,4 @@ while True:
     obs, reward, done, info = env.step(action)
     if done:
         break
-env.sim.render(path='./hardcoded.gif')
+env.sim.render(path="./hardcoded.gif")
