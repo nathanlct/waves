@@ -29,14 +29,31 @@ class TensorboardCallback(BaseCallback):
         plt.close()
         
         # execute environment using trained policy until done
+        actions = []
+        rewards = []
+        times = []
         done = False
         while not done:
             action = self.model.predict(state, deterministic=True)[0]
             state, reward, done, _ = test_env.step(action)
+            actions.append(action)
+            rewards.append(reward)
+            times.append(test_env.sim.t)
 
         # log final norm of y and plot final y
         self.logger.record('custom/done_norm_y', test_env.sim.norm_y())
         figure = plt.figure()
         figure.add_subplot().plot(test_env.sim.x, test_env.sim.y)
         self.logger.record("custom/done_y", Figure(figure, close=True), exclude=("stdout", "log", "json", "csv"))
+        plt.close()
+
+        # plot action and reward curves
+        figure = plt.figure()
+        figure.add_subplot().plot(times, actions)
+        self.logger.record('custom/actions', Figure(figure, close=True), exclude=("stdout", "log", "json", "csv"))
+        plt.close()
+
+        figure = plt.figure()
+        figure.add_subplot().plot(times, rewards)
+        self.logger.record('custom/rewards', Figure(figure, close=True), exclude=("stdout", "log", "json", "csv"))
         plt.close()
