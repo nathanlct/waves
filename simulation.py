@@ -118,7 +118,7 @@ class Simulation_2:
         self.y1 = np.array(list(map(self.y10, self.x)))
         self.y2 = np.array(list(map(self.y20, self.x)))
         self.y3 = np.array(list(map(self.y20, self.x)))
-
+        self.y = [self.y1, self.y2, self.y3]
         self.data = defaultdict(list)
         self.save_data()
 
@@ -128,6 +128,7 @@ class Simulation_2:
         self.data["y1"].append(np.copy(self.y1))
         self.data["y2"].append(np.copy(self.y2))
         self.data["y3"].append(np.copy(self.y3))
+        self.data["y"].append(np.copy(self.y))
 
     def step(self, u=0):
         self.t += self.dt
@@ -141,10 +142,11 @@ class Simulation_2:
         self.y1[1:] -= self.dt * self.y1x
         self.y2[1:] -= self.dt * self.y2x
         self.y3[1:] -= self.dt * self.y3x
+        self.y = [self.y1, self.y2, self.y3]
         self.save_data()
 
     def get_obs(self):
-        return np.array([self.t, self.y2[0]])
+        return np.array([self.y1[-1], self.y3[-1]])
 
     def norm_y(self):
         return (
