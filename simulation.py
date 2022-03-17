@@ -45,7 +45,7 @@ class Simulation:
         self.t += self.dt
 
         # initial condition with control u
-        self.y[0] = self.y[-1]  # + u  # - 0.2 * self.y[len(self.y) // 2] + u
+        self.y[0] = self.y[-1] + u  # - 0.2 * self.y[len(self.y) // 2] + u
 
         # compute df(y)/dx
         self.yx = np.diff(self.f(self.y)) / self.dx
