@@ -8,9 +8,9 @@ class WaveEnv(gym.Env):
     def __init__(self):
         super(WaveEnv, self).__init__()
 
-        self.state_buffer_size = 1
-        self.state_append_every = 1
-        self.state_append_counter = 0
+        self.state_buffer_size = 2
+        # self.state_append_every = 1
+        # self.state_append_counter = 0
 
         self.action_space = spaces.Box(low=-1.0, high=1.0, shape=(1,), dtype=np.float32)
         self.observation_space = spaces.Box(
@@ -35,18 +35,18 @@ class WaveEnv(gym.Env):
         self.sim.step(u=action)
 
         # update state
-        self.state_append_counter += 1
-        if self.state_append_counter == self.state_append_every:
-            self.state_append_counter = 0
-            # roll previous states buffer
-            self.state[2:] = self.state[1:-1]
-        self.state[:2] = self.sim.get_obs()
+        # self.state_append_counter += 1
+        # if self.state_append_counter == self.state_append_every:
+        #     self.state_append_counter = 0
+        # roll previous states buffer
+        # self.state[2:] = self.state[1:-1]
+        self.state = self.sim.get_obs()
 
         # compute reward
         reward = max(-10, -self.sim.norm_y())
 
         # compute done
-        done = self.sim.t >= 15.0
+        done = self.sim.t >= 20.0
 
         return self.state, reward, done, {}
 
@@ -78,9 +78,9 @@ class WaveEnv(gym.Env):
 
         self.sim.reset(y10=self.y0[0], y20=self.y0[1])
 
-        self.state = np.zeros(1 + self.state_buffer_size)
-        self.state[:2] = self.sim.get_obs()
-        self.state_append_counter = 1 if self.state_append_every > 1 else 0
+        # self.state = np.zeros(1 + self.state_buffer_size)
+        self.state = self.sim.get_obs()
+        # self.state_append_counter = 1 if self.state_append_every > 1 else 0
 
         return self.state
 

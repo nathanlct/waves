@@ -133,7 +133,7 @@ class Simulation_2:
     def step(self, u=0):
         self.t += self.dt
         self.y2[0] = self.y1[-1]
-        self.y1[0] = self.y2[-1] - self.y3[-1]
+        self.y1[0] = self.y2[-1] + u
         self.y3[0] = self.y1[-1]
         self.y1x = np.diff(self.f(self.y1)) / self.dx
         self.y2x = np.diff(self.f(self.y2)) / self.dx
@@ -146,7 +146,7 @@ class Simulation_2:
         self.save_data()
 
     def get_obs(self):
-        return np.array([self.y1[-1], self.y3[-1]])
+        return np.array([self.t, self.y1[-1], self.y3[-1]])
 
     def norm_y(self):
         return (

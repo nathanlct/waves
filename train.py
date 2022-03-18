@@ -23,7 +23,7 @@ vec_env = make_vec_env(WaveEnv, n_envs=n_cpus)
 model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log=exp_dir / "tb")
 
 # train model
-model.learn(total_timesteps=1500000, callback=TensorboardCallback())
+model.learn(total_timesteps=7000000, callback=TensorboardCallback())
 
 # save model
 model.save(exp_dir / "model")
