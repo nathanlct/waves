@@ -21,7 +21,16 @@ class WaveEnv(gym.Env):
         )
 
         self.sim = Simulation(
-            f=lambda x: x + 1e-3 * (x * x), dt=0.98 * 1e-2, dx=1e-2, xmin=0.5, xmax=1.5,
+            # f=lambda x: x + 1e-3 * (x * x),
+            # dt=0.98 * 1e-2,
+            # dx=1e-2,
+            # xmin=0.5,
+            # xmax=1.5,
+            f=lambda x: x + (1e-3 * x),
+            dt=0.98 * 1e-2,
+            dx=1e-2,
+            xmin=0.5,
+            xmax=1.5,
         )
 
         self.reset()
