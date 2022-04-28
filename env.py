@@ -26,7 +26,7 @@ class WaveEnv(gym.Env):
             # dx=1e-2,
             # xmin=0.5,
             # xmax=1.5,
-            f=lambda x: x + (1e-3 * x),
+            f=lambda x: x + (1e-3 * x * x),
             dt=0.98 * 1e-2,
             dx=1e-2,
             xmin=0.5,
@@ -62,7 +62,7 @@ class WaveEnv(gym.Env):
             n = 30
             a_lst = np.random.random(n)
             b_lst = np.random.random(n)
-            norm_coef = 5.0 / (np.sum(a_lst) + np.sum(b_lst))
+            norm_coef = 3.0 / (np.sum(a_lst) + np.sum(b_lst))
             a_lst *= norm_coef
             b_lst *= norm_coef
             n_lst = np.arange(n)

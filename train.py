@@ -18,7 +18,6 @@ print(f"Created exp dir at {exp_dir}")
 # create env
 n_cpus = 4
 vec_env = make_vec_env(WaveEnv, n_envs=n_cpus)
-
 # create model
 model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log=exp_dir / "tb")
 

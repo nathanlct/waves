@@ -44,8 +44,8 @@ class Simulation:
     def step(self, u=0):
         self.t += self.dt
 
-        # initial condition with control u
-        self.y[0] = self.y[-1] + u  # - 0.2 * self.y[len(self.y) // 2] + u
+        # initial condition with control u # y(0) = y(1/2)+u(t)
+        self.y[0] = 1.1 * self.y[len(self.y) // 2] + u  # self.y[-1] + u
 
         # compute df(y)/dx
         self.yx = np.diff(self.f(self.y)) / self.dx
@@ -55,8 +55,9 @@ class Simulation:
 
         self.save_data()
 
-    def get_obs(self):
+    def get_obs(self):  # (s,y(s,1/2)) s\in (t-2,t)
         return np.array([self.t, self.y[len(self.y) // 2]])
+        # return np.array([self.t, self.y[-1]])
 
     def norm_y(self):
         return (self.dx * np.sum(self.y * self.y)) ** 0.5
@@ -189,18 +190,23 @@ class Simulation_2:
 
 
 if __name__ == "__main__":
-    sim = Simulation_2(
-        f=lambda x: x * (1 / 0.98) + 0 * (x * x),
-        dt=0.98 * 1e-2,
-        dx=1e-2,
-        xmin=0.5,
-        xmax=1.5,
+    # sim = Simulation_2(
+    #     f=lambda x: x * (1 / 0.98) + 0 * (x * x),
+    #     dt=0.98 * 1e-2,
+    #     dx=1e-2,
+    #     xmin=0.5,
+    #     xmax=1.5,
+    # )
+    # sim.reset(
+    #     y10=lambda x: np.sin(x * np.pi * 6.0) * 0.125,
+    #     y20=lambda x: np.sin(x * np.pi * 4.0) * 0.065,
+    # )
+
+    sim = Simulation(
+        f=lambda x: x + 1e-3 * (x * x), dt=0.99 * 1e-2, dx=1e-2, xmin=0.5, xmax=1.5,
     )
 
-    sim.reset(
-        y10=lambda x: np.sin(x * np.pi * 6.0) * 0.125,
-        y20=lambda x: np.sin(x * np.pi * 4.0) * 0.065,
-    )
+    sim.reset(y0=lambda x: np.sin(x * np.pi * 6.0) * 0.025,)
 
     while sim.t < 30.0:
         sim.step(0)
