@@ -44,7 +44,7 @@ class Simulation(ABC):
         self.save_data()
 
     def get_obs(self):
-        return np.array([self.t, self.y[len(self.y) // 2]])
+        raise NotImplementedError
 
     def norm_y(self):
         return (self.dx * np.sum(self.y * self.y)) ** 0.5
@@ -101,6 +101,9 @@ class SimControlHeat(Simulation):
         # y_t = (y(t+dt) - y(t)) / dt => y(t+dt) = y(t) + dt * (y^3 + y_xx)
         self.y[1:-1] += self.dt * (y3 + yxx)
 
+    def get_obs(self):
+        return np.concatenate([self.t], self.data['y'][0])
+
 
 class SimStabilizeMidObs(Simulation):
     """
@@ -122,6 +125,9 @@ class SimStabilizeMidObs(Simulation):
 
         # dy/dt + df(y)/dx = 0  =>  y(t+dt) = y(t) - dt * df(y)/dx
         self.y[1:] -= self.dt * yx
+
+    def get_obs(self):
+        return np.array([self.t, self.y[len(self.y) // 2]])
 
 
 if __name__ == '__main__':
