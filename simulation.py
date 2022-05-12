@@ -86,6 +86,10 @@ class SimControlHeat(Simulation):
         for some control u = (u1, u2)
         that can observe y(0,x) and t
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.n_controls = 2
+
     def update_y(self, u=(0, 0)):
         # boundary conditions
         u1, u2 = u
@@ -102,7 +106,7 @@ class SimControlHeat(Simulation):
         self.y[1:-1] += self.dt * (y3 + yxx)
 
     def get_obs(self):
-        return np.concatenate([self.t], self.data['y'][0])
+        return np.concatenate(([self.t], self.data['y'][0]))
 
 
 class SimStabilizeMidObs(Simulation):
@@ -115,6 +119,7 @@ class SimStabilizeMidObs(Simulation):
     def __init__(self, f, *args, **kwargs):
         super.__init__(*args, **kwargs)
         self.f = f
+        self.n_controls = 1
 
     def update_y(self, u=0):
         # boundary condition with control u dt
