@@ -3,32 +3,25 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 import matplotlib.animation as animation
 from collections import defaultdict
+from abc import ABC
+from celluloid import Camera
 
 
-class Simulation:
-    """
-    Simulating
-
-        y_t + f(y)_x = 0
-        y(t,0) = y(t,1) + u(t, y(t,1/2))
-    
-    for some control u
-    """
-
-    def __init__(self, f, dt, dx, xmin, xmax):
+class Simulation(ABC):
+    def __init__(self, dt, dx, xmin, xmax, y0=None):
         self.dt = dt
         self.dx = dx
 
         self.xmin = xmin
         self.xmax = xmax
 
-        self.f = f
-        self.y0 = None
+        self.reset(y0 if y0 is not None else lambda _: 0)
 
     def reset(self, y0=None):
         if y0 is not None:
             self.y0 = y0
 
+        self.n_steps = 0
         self.t = 0
         self.x = np.arange(self.xmin, self.xmax + 1e-9, self.dx)
         self.y = np.array(list(map(self.y0, self.x)))
@@ -37,22 +30,17 @@ class Simulation:
         self.save_data()
 
     def save_data(self):
-        self.data["t"].append(self.t)
-        self.data["x"].append(np.copy(self.x))
-        self.data["y"].append(np.copy(self.y))
+        self.data['t'].append(self.t)
+        self.data['x'].append(np.copy(self.x))
+        self.data['y'].append(np.copy(self.y))
+
+    def update_y(self):
+        raise NotImplementedError
 
     def step(self, u=0):
         self.t += self.dt
-
-        # initial condition with control u
-        self.y[0] = self.y[-1] + u  # - 0.2 * self.y[len(self.y) // 2] + u
-
-        # compute df(y)/dx
-        self.yx = np.diff(self.f(self.y)) / self.dx
-
-        # dy/dt + df(y)/dx = 0  =>  y(t+dt) = y(t) - dt * df(y)/dx
-        self.y[1:] -= self.dt * self.yx
-
+        self.n_steps += 1
+        self.update_y(u)
         self.save_data()
 
     def get_obs(self):
@@ -61,47 +49,93 @@ class Simulation:
     def norm_y(self):
         return (self.dx * np.sum(self.y * self.y)) ** 0.5
 
-    def render(self, path=None):
+    def render(self, path='sim.mp4', fps=30.0, dpi=300, accel=1.0):
         """
         Renders the evolution of y since t=0 (ie since the last reset).
-        Shows it using plt.show, unless path is specified in which case
-        it is saved at that path and not showed. Path must end with ".gif".
         """
-        fig = plt.figure()
+        fig = plt.figure(dpi=dpi)
+        plt.xlim(self.xmin, self.xmax)
+        max_abs_y0 = np.max(np.abs(self.data['y'][0]))
+        plt.ylim(-max_abs_y0, max_abs_y0)
+        plt.grid(color='green', linewidth=0.5, linestyle='--')
+        camera = Camera(fig)
 
-        y_line = plt.plot(self.data["x"][0], self.data["y"][0])[0]
-        time_label = plt.text(
-            0.8, 0.9, "", fontsize=10, transform=fig.axes[0].transAxes
-        )
+        if fps == np.inf:
+            fps = 1 / self.dt * 2
+        snap_interval = 1.0 / fps
+        last_time_snapped = - 2 * snap_interval
+        for x_data, y_data, t_data in zip(self.data['x'], self.data['y'], self.data['t']):
+            if t_data >= last_time_snapped + snap_interval:
+                last_time_snapped = t_data
+                plt.plot(x_data, y_data, color='black')
+                plt.text(0.8, 0.9, f't = {t_data:.3f} s', fontsize=10, transform=fig.axes[0].transAxes)
+                camera.snap()
 
-        def animate(i):
-            y_line.set_data(self.data["x"][i], self.data["y"][i])
-            time_label.set_text(f't = {self.data["t"][i]:.3f} s')
-            return [y_line, time_label]
-
-        anim_fps = 30
-        anim = animation.FuncAnimation(
-            fig=fig,
-            func=animate,
-            frames=range(0, len(self.data["t"]), int(1 / (self.dt * anim_fps))),
-            interval=1000 / anim_fps,
-            repeat=True,
-            repeat_delay=500,
-            blit=True,
-        )
-
-        if path is None:
-            plt.show()
-        else:
-            anim.save(path)
+        animation = camera.animate(interval=snap_interval * 1000 / accel)
+        animation.save(path)
+        print('>', path)
 
 
-if __name__ == "__main__":
-    sim = Simulation(f=lambda x: x * x + x, dt=0.3 * 1e-3, dx=1e-3, xmin=0, xmax=1,)
+class SimControlHeat(Simulation):
+    """
+    Simulating
+        y_t - y_xx = y^3   
+    Boundary conditions
+        y(t,0) = u1
+        y(t,1) = u2
+        for some control u = (u1, u2)
+        that can observe y(0,x) and t
+    """
+    def update_y(self, u=(0, 0)):
+        # boundary conditions
+        u1, u2 = u
+        self.y[0] = u1
+        self.y[-1] = u2
 
-    sim.reset(y0=lambda x: np.cos(x * np.pi * 8.0) * 0.01)
+        # compute y_xx = (y(t,n+1)-2y(t,n)+y(t,n-1))/dx^2
+        yxx = np.diff(self.y, n=2) / (self.dx * self.dx)
 
-    while sim.t < 40.0:
-        sim.step(0)
+        # compute y^3
+        y3 = np.power(self.y, 3)[1:-1]
 
-    sim.render(path="test.gif")
+        # y_t = (y(t+dt) - y(t)) / dt => y(t+dt) = y(t) + dt * (y^3 + y_xx)
+        self.y[1:-1] += self.dt * (y3 + yxx)
+
+
+class SimStabilizeMidObs(Simulation):
+    """
+    Simulating
+        y_t + f(y)_x = 0
+        y(t,0) = y(t,1) + u(t, y(t,1/2))
+    for some control u
+    """
+    def __init__(self, f, *args, **kwargs):
+        super.__init__(*args, **kwargs)
+        self.f = f
+
+    def update_y(self, u=0):
+        # boundary condition with control u dt
+        self.y[0] = self.y[-1] + u  # - 0.2 * self.y[len(self.y) // 2] + u
+
+        # compute df(y)/dx
+        yx = np.diff(self.f(self.y)) / self.dx
+
+        # dy/dt + df(y)/dx = 0  =>  y(t+dt) = y(t) - dt * df(y)/dx
+        self.y[1:] -= self.dt * yx
+
+
+if __name__ == '__main__':
+    if True:
+        sim = SimControlHeat(dt=1e-4, dx=1e-3, xmin=0, xmax=1, y0=lambda x: 5 * np.sin(np.pi * x))
+        sim.reset()
+        while sim.n_steps <= 10:
+            sim.step((0, 0))
+        sim.render(path='test.mp4', fps=np.inf, dpi=300, accel=0.0005)
+        
+    if False:
+        sim = SimStabilizeMidObs(f=lambda x: x * x + x, dt=0.3 * 1e-3, dx=1e-3, xmin=0, xmax=1,)
+
+        sim.reset(y0=lambda x: np.cos(x * np.pi * 8.0) * 0.01)
+        while sim.t < 2.0:
+            sim.step(0)
+        sim.render(path='test.mp4', fps=120.0, dpi=300, accel=0.25)
