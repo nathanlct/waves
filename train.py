@@ -16,14 +16,13 @@ exp_dir.mkdir(parents=True, exist_ok=False)
 print(f"Created exp dir at {exp_dir}")
 
 # create env
-n_cpus = 4
-vec_env = make_vec_env(WaveEnv, n_envs=n_cpus)
+eval_env = SimControlHeatEnv(config=config)
 
 # create model
 model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log=exp_dir / "tb")
 
 # train model
-model.learn(total_timesteps=1000000, callback=TensorboardCallback())
+model.learn(total_timesteps=1000000, callback=TensorboardCallback(eval_env))
 
 # save model
 model.save(exp_dir / "model")

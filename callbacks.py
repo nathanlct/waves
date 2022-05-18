@@ -9,15 +9,17 @@ class TensorboardCallback(BaseCallback):
     """
     Custom callback for plotting additional values in tensorboard.
     """
-    def __init__(self, verbose=0):
+    def __init__(self, eval_env, verbose=0):
         super(TensorboardCallback, self).__init__(verbose)
+
+        self.eval_env = eval_env
 
     def _on_step(self):
         return True
     
     def _on_rollout_end(self):
         # create test environment
-        test_env = WaveEnv()
+        test_env = self.eval_env
 
         # reset
         state = test_env.reset()
