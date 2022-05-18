@@ -137,11 +137,11 @@ class SimStabilizeMidObs(Simulation):
 
 if __name__ == '__main__':
     if True:
-        sim = SimControlHeat(dt=1e-4, dx=1e-3, xmin=0, xmax=1, y0=lambda x: 5 * np.sin(np.pi * x))
+        sim = SimControlHeat(dt=0.45 * 1e-4, dx=1e-2, xmin=0, xmax=1, y0=lambda x: 3.6 * np.sin(np.pi * x))
         sim.reset()
-        while sim.n_steps <= 10:
+        while sim.t <= 2.0:
             sim.step((0, 0))
-        sim.render(path='test.mp4', fps=np.inf, dpi=300, accel=0.0005)
+        sim.render(path='test.mp4', fps=50, dpi=300, accel=0.5)
         
     if False:
         sim = SimStabilizeMidObs(f=lambda x: x * x + x, dt=0.3 * 1e-3, dx=1e-3, xmin=0, xmax=1,)
