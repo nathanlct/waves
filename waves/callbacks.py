@@ -1,8 +1,8 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import Figure
-import matplotlib.pyplot as plt
-from env import WaveEnv
-import numpy as np
 
 
 class TensorboardCallback(BaseCallback):
@@ -17,6 +17,9 @@ class TensorboardCallback(BaseCallback):
     def _on_step(self):
         return True
     
+    def _on_rollout_start(self):
+        pass
+
     def _on_rollout_end(self):
         # create test environment
         test_env = self.eval_env

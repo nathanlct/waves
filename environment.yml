@@ -1,26 +1,7 @@
 name: waves
 channels:
-  - defaults
+    - defaults
 dependencies:
-  - numpy=1.21.5
-  - pip=21.2.4
-  - python=3.9.12
-  - setuptools=61.2.0
-  - pip:
-    - celluloid==0.2.0
-    - cloudpickle==2.0.0
-    - cycler==0.11.0
-    - fonttools==4.33.3
-    - gym==0.21.0
-    - kiwisolver==1.4.2
-    - matplotlib==3.5.2
-    - packaging==21.3
-    - pandas==1.4.2
-    - pillow==9.1.0
-    - pyparsing==3.0.9
-    - python-dateutil==2.8.2
-    - pytz==2022.1
-    - stable-baselines3==1.5.0
-    - torch==1.11.0
-    - typing-extensions==4.2.0
-    - tensorboard==2.9.0
+    - python=3.8.16
+    - stable-baselines3==1.7.0
+    - tensorboard==2.12.0
