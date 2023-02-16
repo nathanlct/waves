@@ -44,4 +44,4 @@ class SimControlHeat(Simulation):
         self.y[1:-1] += self.dt * (y3 + yxx)
 
     def get_obs(self):
-        return np.concatenate(([self.t], self.data['y'][0]))
+        return np.concatenate(([self.t], self.y[0]))

@@ -50,7 +50,7 @@ class Simulation(ABC):
         
         # create initial condition, try using function in a vectorized way otherwise create elements one by one
         try:
-            self.y = np.array(self.y0(x))
+            self.y = np.array(self.y0(self.x))
         except:
             self.y = np.array(list(map(self.y0, self.x)))
 
