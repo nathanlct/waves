@@ -57,6 +57,11 @@ class WavesEnv(gym.Env, ABC):
 
         # compute done
         done = self.compute_done()
+        
+        # end early if norm blows up
+        if self.sim.norm_y() > 1000:
+            done = True
+            reward -= 100
 
         return state, reward, done, {}
 
