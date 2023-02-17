@@ -44,6 +44,8 @@ class Simulation:
     def step(self, u=0):
         self.t += self.dt
 
+
+
         # initial condition with control u # y(0) = y(1/2)+u(t)
         self.y[0] = 1.1 * self.y[len(self.y) // 2] + u  # self.y[-1] + u
 
