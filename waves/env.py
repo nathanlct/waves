@@ -44,8 +44,8 @@ class WavesEnv(gym.Env, ABC):
 
     def step(self, action):
         # convert action from [-1, 1] to [action_min, action_max]
-        action = (action + 1.0) * self.action_max / 2.0 - self.action_min
-        
+        action = (action + 1.0) * (self.action_max - self.action_min) / 2.0 + self.action_min
+
         # step simulation with control
         self.sim.step(u=action)
 
