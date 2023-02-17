@@ -74,7 +74,7 @@ class WavesEnv(gym.Env, ABC):
         return state
 
     def compute_reward(self, action):
-        return max(-10, -self.sim.norm_y())
+        return max(-1, -self.sim.norm_y() / 100)
 
     def compute_done(self):
         return self.sim.t >= self.tmax

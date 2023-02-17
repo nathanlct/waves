@@ -110,9 +110,9 @@ class Simulation(ABC):
         text = plt.text(0.8, 0.9, '', fontsize=10, transform=fig.axes[0].transAxes)
         
         # configure figure
-        plt.xlim(self.xmin, self.xmax)
+        plt.xlim(self.xmin - 0.1, self.xmax + 0.1)
         try:
-            plt.ylim(1.1 * np.nanmin(self.y_lst), 1.1 * np.nanmax(self.y_lst))
+            plt.ylim(np.nanmin(self.y_lst) - 0.1, np.nanmax(self.y_lst) + 0.1)
         except:
             # inf
             pass

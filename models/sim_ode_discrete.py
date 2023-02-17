@@ -51,10 +51,12 @@ class SimODEDiscrete(Simulation):
     def n_controls(self):
         return 1
 
-    def dynamics(self, x=[0, 0, 0, 0], u=0):
+    def dynamics(self, x=[0, 0, 0, 0], u=[0]):
         """
         Dynamic of the system
         """
+        u = u[0]
+
         nu = 0.49  # caractere de differentiation
         nuE = 0.25  # taux d'eclosion
         deltaE = 0.03  # taux d'Oeufs gattes
@@ -67,9 +69,8 @@ class SimODEDiscrete(Simulation):
         a = nuE + deltaE
         b = (1 - nu) * nuE
         c = betaE * nu * nuE
-        K = (1 / (1 - ((deltaF * a) / c))) * self.y0_value
-        print("Here")
-        print(self.y0_value)
+        y0 = self.y_lst[0]
+        K = (1 / (1 - ((deltaF * a) / c))) * y0[0]
 
         assert len(x) == 4
         return np.array(
@@ -83,9 +84,9 @@ class SimODEDiscrete(Simulation):
 
     def update_y(self, u=0):
         current_y = np.copy(self.y)
-        self.y = list(np.array(current_y) + self.dt * self.dynamics(current_y, u))
+        self.y = np.array(current_y) + self.dt * self.dynamics(current_y, u)
 
     def get_obs(self):
         return np.array(
-            [self.t / self.t_norm, self.y[2] / self.y_norm + self.y[3] / self.y_norm,]
+            [self.t / self.t_norm, self.y[1] / self.y_norm + self.y[3] / self.y_norm,]
         )
