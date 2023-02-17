@@ -83,6 +83,9 @@ class WavesEnv(gym.Env, ABC):
         self.memory = np.zeros(self.n_observations_base * self.n_past_states)
 
     def reset(self):
+        # reset sim
+        self.sim.reset()
+
         # reset memory
         self.reset_memory()
 
