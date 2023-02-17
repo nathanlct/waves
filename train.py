@@ -27,13 +27,15 @@ parser.add_argument('--dt', type=float, default=None, help='Time sampling interv
 
 # env params
 parser.add_argument('--tmax', type=float, default=2.0, help='Duration (in time) of one episode.')
-parser.add_argument('--action_min', type=float, default=-1.0, help='Minimum control value.')
-parser.add_argument('--action_max', type=float, default=1.0, help='Maximum control value.')
+parser.add_argument('--action_min', type=str, default='-1.0', help='Minimum control value. Could use a simulation-specific '
+                        'constant, eg. "self.sim.k * 10".')
+parser.add_argument('--action_max', type=str, default='1.0', help='Maximum control value. Could use a simulation-specific '
+                        'constant, eg. "self.sim.k * 10".')
 parser.add_argument('--n_past_states', type=int, default=0, help='Number of previous states to add in the current state (memory).')
 
 # training params
 parser.add_argument('--cpus', type=int, default=1, help='Number of CPUs to use for training.')
-parser.add_argument('--steps', type=int, default=1e9, help='Number of timesteps to train for.')
+parser.add_argument('--steps', type=float, default=1e9, help='Number of timesteps to train for.')
 
 args = parser.parse_args()
 

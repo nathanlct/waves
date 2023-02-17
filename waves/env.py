@@ -30,11 +30,11 @@ class WavesEnv(gym.Env, ABC):
 
         # action space
         self.n_actions = self.sim.n_controls
-        self.action_min = config['action_min']
-        self.action_max = config['action_max']
+        self.action_min = eval(config['action_min'])
+        self.action_max = eval(config['action_max'])
         self.action_space = gym.spaces.Box(
-            low=self.action_min,
-            high=self.action_max,
+            low=-1.0,
+            high=1.0,
             shape=(self.n_actions,),
             dtype=np.float32
         )
@@ -43,6 +43,9 @@ class WavesEnv(gym.Env, ABC):
         self.reset()
 
     def step(self, action):
+        # convert action from [-1, 1] to [action_min, action_max]
+        action = (action + 1.0) * self.action_max / 2.0 - self.action_min
+        
         # step simulation with control
         self.sim.step(u=action)
 
