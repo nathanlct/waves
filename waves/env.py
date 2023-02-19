@@ -11,32 +11,26 @@ class WavesEnv(gym.Env, ABC):
 
         # load config
         self.config = config
-        self.tmax = config['tmax']
+        self.tmax = config["tmax"]
 
         # memory
         self.sim.reset()
         self.n_observations_base = self.sim.get_obs().shape[0]
-        self.n_past_states = config['n_past_states']
+        self.n_past_states = config["n_past_states"]
         self.reset_memory()
 
         # observation space
         self.n_observations = self.n_observations_base * (1 + self.n_past_states)
         self.observation_space = gym.spaces.Box(
-            low=-np.inf,
-            high=np.inf,
-            shape=(self.n_observations,),
-            dtype=np.float32,
+            low=-np.inf, high=np.inf, shape=(self.n_observations,), dtype=np.float32,
         )
 
         # action space
         self.n_actions = self.sim.n_controls
-        self.action_min = eval(config['action_min'])
-        self.action_max = eval(config['action_max'])
+        self.action_min = eval(config["action_min"])
+        self.action_max = eval(config["action_max"])
         self.action_space = gym.spaces.Box(
-            low=-1.0,
-            high=1.0,
-            shape=(self.n_actions,),
-            dtype=np.float32
+            low=-1.0, high=1.0, shape=(self.n_actions,), dtype=np.float32
         )
 
         # reset env
@@ -44,7 +38,9 @@ class WavesEnv(gym.Env, ABC):
 
     def step(self, action):
         # convert action from [-1, 1] to [action_min, action_max]
-        action = (action + 1.0) * (self.action_max - self.action_min) / 2.0 + self.action_min
+        action = (action + 1.0) * (
+            self.action_max - self.action_min
+        ) / 2.0 + self.action_min
 
         # step simulation with control
         self.sim.step(u=action)
@@ -57,9 +53,9 @@ class WavesEnv(gym.Env, ABC):
 
         # compute done
         done = self.compute_done()
-        
+
         # end early if norm blows up
-        if self.sim.norm_y() > 1000:
+        if self.sim.norm_y() > 1000 * self.sim.y_norm:
             done = True
             reward -= 100
 
@@ -74,12 +70,12 @@ class WavesEnv(gym.Env, ABC):
 
         if append_to_memory and self.n_past_states > 0:
             self.memory = np.roll(self.memory, self.n_observations_base)
-            self.memory[:self.n_observations_base] = base_state
+            self.memory[: self.n_observations_base] = base_state
 
         return state
 
     def compute_reward(self, action):
-        return max(-1, -self.sim.norm_y() / 100)
+        return max(-1, -self.sim.norm_y() / (self.sim.y_norm * 100))
 
     def compute_done(self):
         return self.sim.t >= self.tmax

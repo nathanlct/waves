@@ -26,7 +26,7 @@ parser.add_argument('--xmax', type=float, default=None, help='Space right bounda
 parser.add_argument('--dt', type=float, default=None, help='Time sampling interval. By default, use the simulation\'s default.')
 
 # env params
-parser.add_argument('--tmax', type=float, default=2.0, help='Duration (in time) of one episode.')
+parser.add_argument('--tmax', type=float, default=100.0, help='Duration (in time) of one episode.')
 parser.add_argument('--action_min', type=str, default='-1.0', help='Minimum control value. Could use a simulation-specific '
                         'constant, eg. "self.sim.k * 10".')
 parser.add_argument('--action_max', type=str, default='1.0', help='Maximum control value. Could use a simulation-specific '
