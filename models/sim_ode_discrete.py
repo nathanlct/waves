@@ -10,8 +10,8 @@ Example simulation command
     python simulate.py SimODEDiscrete --kwargs "dict(k=1)" --dt 1e-3
 
 Example training command
-    python train.py SimODEDiscrete --kwargs "dict(k=1, t_norm=2.0)" --tmax 2.0 --dt 1e-3 \
-        --action_min 0 --action_max "10 * self.sim.k" --cpus 1 --steps 1e9
+    python train.py SimODEDiscrete --kwargs "dict(k=1, t_norm=1.0)" --tmax 1.0 --dt 1e-3 \
+        --action_min "-10 * self.sim.k" --action_max "10 * self.sim.k" --cpus 10 --steps 1e9
 """
 
 from waves.simulation import Simulation
@@ -55,7 +55,7 @@ class SimODEDiscrete(Simulation):
         """
         Dynamic of the system
         """
-        u = u[0]
+        u = np.abs(u[0])
 
         nu = 0.49  # caractere de differentiation
         nuE = 0.25  # taux d'eclosion
