@@ -19,7 +19,7 @@ import numpy as np
 
 
 class SimODEDiscrete(Simulation):
-    def __init__(self, K=40000.0, t_norm=5.0, y_norm=None, **kwargs):
+    def __init__(self, K=40000.0, t_norm=100.0, y_norm=None, **kwargs):
         """
         See parent class.
         
