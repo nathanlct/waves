@@ -59,7 +59,11 @@ class WavesEnv(gym.Env, ABC):
             done = True
             reward -= 100
 
-        return state, reward, done, {}
+        infos = {
+            'scaled_action': action,
+        }
+
+        return state, reward, done, infos
 
     def get_base_state(self):
         return self.sim.get_obs()

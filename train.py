@@ -36,6 +36,7 @@ parser.add_argument('--n_past_states', type=int, default=0, help='Number of prev
 # training params
 parser.add_argument('--cpus', type=int, default=1, help='Number of CPUs to use for training.')
 parser.add_argument('--steps', type=float, default=1e9, help='Number of timesteps to train for.')
+parser.add_argument('--verbose', default=False, action='store_true', help='If set, prints training status periodically.')
 
 args = parser.parse_args()
 
@@ -63,7 +64,7 @@ vec_env = make_vec_env(WavesEnv, n_envs=args.cpus, env_kwargs=env_kwargs)
 eval_env = WavesEnv(**env_kwargs)
 
 # create model
-model = PPO('MlpPolicy', vec_env, verbose=1, tensorboard_log=exp_dir / 'tb')
+model = PPO('MlpPolicy', vec_env, verbose=int(args.verbose), tensorboard_log=exp_dir / 'tb')
 
 # train model
 model.learn(total_timesteps=int(args.steps), callback=TensorboardCallback(eval_env))

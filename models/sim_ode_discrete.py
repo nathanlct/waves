@@ -53,7 +53,7 @@ class SimODEDiscrete(Simulation):
         """
         Dynamic of the system
         """
-        u = u[0]
+        u = np.abs(u[0])
 
         nu = 0.49  # caractere de differentiation
         nuE = 0.25  # taux d'eclosion
@@ -86,5 +86,11 @@ class SimODEDiscrete(Simulation):
 
     def get_obs(self):
         return np.array(
-            [self.t / self.t_norm, self.y[0] / self.y_norm, self.y[1] / self.y_norm , self.y[2] / self.y_norm, self.y[3] / self.y_norm]
+            [
+                self.t / self.t_norm,
+                self.y[0] / self.y_norm,
+                self.y[1] / self.y_norm,
+                self.y[2] / self.y_norm,
+                self.y[3] / self.y_norm,
+            ]
         )
