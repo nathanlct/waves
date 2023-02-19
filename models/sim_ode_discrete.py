@@ -10,7 +10,7 @@ Example simulation command
     python simulate.py SimODEDiscrete --dt 1e-3
 
 Example training command
-    python train.py SimODEDiscrete --kwargs "dict(t_norm=2.0)" --tmax 100.0 --dt 1e-3 \
+    python train.py SimODEDiscrete --kwargs "dict(t_norm=100)" --tmax 100.0 --dt 1e-3 \
         --action_min 0 --action_max "10 * self.sim.K" --cpus 1 --steps 1e9
 """
 
