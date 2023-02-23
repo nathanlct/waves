@@ -31,6 +31,7 @@ class SimODEDiscrete(Simulation):
                  obs_time=False,
                  obs_y=False,
                  obs_y0=False,
+                 obs_MMS=False,
                  rwd_y123=0,
                  rwd_y4=0,
                  rwd_y4_last100=0,
@@ -62,6 +63,7 @@ class SimODEDiscrete(Simulation):
         self.obs_time = obs_time
         self.obs_y = obs_y
         self.obs_y0 = obs_y0
+        self.obs_MMS = obs_MMS
         self.rwd_y123 = rwd_y123
         self.rwd_y4 = rwd_y4
         self.rwd_y4_last100 = rwd_y4_last100
@@ -126,6 +128,9 @@ class SimODEDiscrete(Simulation):
             state.append(normalize(self.y[1], 0, 2 * self.K))
             state.append(normalize(self.y[2], 0, 2 * self.K))
             state.append(normalize(self.y[3], 0, 50 * self.K))
+
+        if self.obs_MMS:
+            state.append(normalize(self.y[1] + self.y[3], 0, 50 * self.K))
         
         return np.array(state)
 
