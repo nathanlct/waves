@@ -15,17 +15,33 @@ Example training command
 """
 
 from waves.simulation import Simulation
+
 import numpy as np
 
 
+def normalize(x, xmin, xmax):
+    """Transform x from [xmin, xmax] range to [-1, 1] range.
+    """
+    return (x - xmin) / (xmax - xmin) * 2.0 - 1.0
+
+
 class SimODEDiscrete(Simulation):
-    def __init__(self, K=40000.0, t_norm=100.0, y_norm=None, **kwargs):
+    def __init__(self,
+                 K=40000.0,
+                 obs_time=False,
+                 obs_y=False,
+                 obs_y0=False,
+                 rwd_y123=0,
+                 rwd_y4=0,
+                 rwd_y4_last100=0,
+                 **kwargs):
         """
         See parent class.
-        
+
         K: state space is [0, K]^4, action space is [0, 10*K]
-        t_norm: normalization factor for time in the observations
-        y_norm: normalization factor for states in the observations (default value is K)
+        
+        obs_x: whether to add observation "x" to the state space (default False = don't add that state)
+        rwd_x: coefficient in front of the "x" term in the reward function (defaut 0 = don't add that term)
         """
         sim_params = {
             # "y0": lambda x: np.random.uniform(low=0.0, high=k, size=(len(x),)),
@@ -42,8 +58,15 @@ class SimODEDiscrete(Simulation):
             raise ValueError("xmin, xmax and dx cannot be modified in this simulation.")
 
         self.K = K
-        self.t_norm = t_norm
-        self.y_norm = y_norm or self.K
+        
+        self.obs_time = obs_time
+        self.obs_y = obs_y
+        self.obs_y0 = obs_y0
+        self.rwd_y123 = rwd_y123
+        self.rwd_y4 = rwd_y4
+        self.rwd_y4_last100 = rwd_y4_last100
+        
+        print(f'Initializing simulation with K={K}, and state space of size {len(self.get_obs())}.')
 
     @property
     def n_controls(self):
@@ -85,12 +108,50 @@ class SimODEDiscrete(Simulation):
         self.y = np.array(current_y) + self.dt * self.dynamics(current_y, u)
 
     def get_obs(self):
-        return np.array(
-            [
-                self.t / self.t_norm,
-                self.y[0] / self.y_norm,
-                self.y[1] / self.y_norm,
-                self.y[2] / self.y_norm,
-                self.y[3] / self.y_norm,
-            ]
-        )
+        state = []
+        
+        if self.obs_time:
+            state.append(normalize(self.t, 0, self.tmax))
+        
+        if self.obs_y:
+            state.append(normalize(self.y[0], 0, 2 * self.K))
+            state.append(normalize(self.y[1], 0, 2 * self.K))
+            state.append(normalize(self.y[2], 0, 2 * self.K))
+            # TODO y[3] can reach much larger values
+            # we should probably enforce a max to make sure the observations don't blow
+            state.append(normalize(self.y[3], 0, 50 * self.K))
+        
+        if self.obs_y0:
+            state.append(normalize(self.y[0], 0, 2 * self.K))
+            state.append(normalize(self.y[1], 0, 2 * self.K))
+            state.append(normalize(self.y[2], 0, 2 * self.K))
+            state.append(normalize(self.y[3], 0, 50 * self.K))
+        
+        return np.array(state)
+
+    def reward(self):
+        reward = 0
+        reward_info = {}
+        
+        # penalize norm of first three states
+        if self.rwd_y123 > 0:
+            rwd_y123 = - self.rwd_y123 * np.linalg.norm([self.y[0], self.y[1], self.y[2]]) / self.K
+            reward_info['rwd_y123'] = rwd_y123
+            reward += rwd_y123
+        
+        # penalize (norm of) fourth state
+        if self.rwd_y4 > 0:
+            rwd_y4 = - self.rwd_y4 * self.y[3] / self.K
+            reward_info['rwd_y4'] = rwd_y4
+            reward += rwd_y4
+        
+        # penalize fourth state in the last 100 seconds
+        if self.rwd_y4_last100 > 0:
+            if self.t > self.tmax - 100:
+                rwd_y4_last100 = - self.rwd_y4_last100 * self.y[3] / self.K
+            else:
+                rwd_y4_last100 = 0
+            reward_info['rwd_y4_last100'] = rwd_y4_last100
+            reward += rwd_y4_last100
+
+        return reward, reward_info

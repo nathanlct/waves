@@ -7,24 +7,31 @@ from abc import ABC
 
 
 class Simulation(ABC):
-    def __init__(self, dt, dx, xmin, xmax, y0=None, y0_generator=None):
+    def __init__(self, dt, dx, xmin, xmax, y0=None, y0_generator=None, tmax=None):
         """Initialize the simulation.
         
         dt: time delta (in seconds)
         dx: space delta
         xmin: space lower bound
         xmax: space upper bound
+        n_steps_per_action: number of times the simulation is updated with the same action
+            (increase this to reduce the number of environment steps while keeping the same
+            number of simulation steps, with the same control action applied several times)
         y0: initial condition function (ideally vectorized)
             input: np.array of x's ; output: np.array of the same size of y0's
         y0_generator: function called at each reset, that takes in no parameters and returns
                       and y0 initial condition function. If None, y0 must be specified and will
                       be kept at each reset.
+        tmax: maximum simulation time. Note that this is not actually used for resetting the
+            simulation, it is purely informational as to the maximum time a simulation
+            is expected to run.
         """
         # store config
         self.dt = dt
         self.dx = dx
         self.xmin = xmin
         self.xmax = xmax
+        self.tmax = tmax
 
         # initialize simulation
         if y0 is None and y0_generator is None:
@@ -42,7 +49,6 @@ class Simulation(ABC):
             self.y0 = self.y0_generator()
 
         # reset counters
-        self.n_steps = 0
         self.t = 0
         
         # reset initial
@@ -69,19 +75,21 @@ class Simulation(ABC):
 
     def step(self, u=0):
         """Execute one step of the simulation."""
-        # incremenents counters
+        # apply control and increment time
         self.t += self.dt
-        self.n_steps += 1
-        
-        # apply control
         self.update_y(u)
 
         # save for later plotting/metrics
+        # TODO i think there is no need to do this during training, takes time
         self.t_lst.append(self.t)
         self.y_lst.append(np.copy(self.y))
 
     def get_obs(self):
         """Return a 1D numpy array given as an input observation to the control."""
+        raise NotImplementedError
+
+    def reward(self):
+        """Return the reward for the current timestep."""
         raise NotImplementedError
 
     def norm_y(self):

@@ -29,10 +29,10 @@ def parse_sim_args(args):
         if args.xmax is not None: sim_params['xmax'] = args.xmax 
         sim_kwargs = {
             **sim_params,
-            **eval(args.kwargs)
+            **eval(args.sim_kwargs)
         }
     except TypeError as err:
-        raise TypeError(f'{args.sim}.{err}. Consider adding or removing some arguments using --kwargs.')
+        raise TypeError(f'{args.sim}.{err}. Consider adding or removing some arguments using --kwargs or --sim_kwargs.')
 
     # return sim
     return sim_class, sim_kwargs

@@ -7,11 +7,13 @@ class WavesEnv(gym.Env, ABC):
     def __init__(self, sim_class, sim_kwargs, config):
         super().__init__()
 
-        self.sim = sim_class(**sim_kwargs)
-
         # load config
         self.config = config
         self.tmax = config["tmax"]
+        self.n_steps_per_action = config["n_steps_per_action"]
+
+        # create sim
+        self.sim = sim_class(**sim_kwargs, tmax=self.tmax)
 
         # memory
         self.sim.reset()
@@ -43,27 +45,32 @@ class WavesEnv(gym.Env, ABC):
         ) / 2.0 + self.action_min
 
         # step simulation with control
-        self.sim.step(u=action)
+        for _ in range(self.n_steps_per_action):
+            self.sim.step(u=action)
 
         # update state
         state = self.get_state(append_to_memory=True)
 
         # compute reward
-        reward = self.compute_reward(action)
+        reward, reward_info = self.compute_reward(action)
+
+        info = {
+            'scaled_action': action,
+            'reward_info': reward_info,
+        }
 
         # compute done
-        done = self.compute_done()
+        done = False
+        if self.sim.t >= self.tmax:
+            done = True
+            info["TimeLimit.truncated"] = True  # for SB3 end-of-horizon bootstrapping
 
         # end early if norm blows up
-        if self.sim.norm_y() > 1000 * self.sim.y_norm:
+        if self.sim.norm_y() > 1000 * self.sim.K:
             done = True
             reward -= 100
 
-        infos = {
-            'scaled_action': action,
-        }
-
-        return state, reward, done, infos
+        return state, reward, done, info
 
     def get_base_state(self):
         return self.sim.get_obs()
@@ -79,10 +86,7 @@ class WavesEnv(gym.Env, ABC):
         return state
 
     def compute_reward(self, action):
-        return max(-1, -self.sim.norm_y() / (self.sim.y_norm * 100))
-
-    def compute_done(self):
-        return self.sim.t >= self.tmax
+        return self.sim.reward()
 
     def reset_memory(self):
         self.memory = np.zeros(self.n_observations_base * self.n_past_states)

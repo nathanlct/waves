@@ -11,7 +11,7 @@ parser.add_argument(
     "sim", type=str, help='Simulation to use, eg. "SimStabilizeMidObs".'
 )
 parser.add_argument(
-    "--kwargs",
+    "--sim_kwargs",
     type=str,
     default="dict()",
     help='Additional simulation kwargs, eg. "dict(f=lambda x: x*x)".',
