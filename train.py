@@ -11,7 +11,7 @@ from stable_baselines3.common.vec_env.dummy_vec_env import DummyVecEnv
 
 from waves.callbacks import TensorboardCallback
 from waves.env import WavesEnv
-from waves.utils import create_log_dir, parse_sim_args
+from waves.utils import create_log_dir, parse_env_args
 
 
 # parse CLI params
@@ -55,19 +55,7 @@ args = parser.parse_args()
 
 
 # create config
-sim_class, sim_kwargs = parse_sim_args(args)
-
-env_kwargs = {
-    'sim_class': sim_class,
-    'sim_kwargs': sim_kwargs,
-    'config': {
-        'tmax': args.tmax,
-        'action_min': args.action_min,
-        'action_max': args.action_max,
-        'n_past_states': args.n_past_states,
-        'n_steps_per_action': args.n_steps_per_action,
-    },
-}
+env_kwargs = parse_env_args(args)
 
 if __name__ == '__main__':
     # create experiment dir

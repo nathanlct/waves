@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from argparse import Namespace
 
 from models import *
 
@@ -36,3 +37,21 @@ def parse_sim_args(args):
 
     # return sim
     return sim_class, sim_kwargs
+
+def parse_env_args(args):
+    args = Namespace(**args)
+    sim_class, sim_kwargs = parse_sim_args(args)
+
+    env_kwargs = {
+        'sim_class': sim_class,
+        'sim_kwargs': sim_kwargs,
+        'config': {
+            'tmax': args.tmax,
+            'action_min': args.action_min,
+            'action_max': args.action_max,
+            'n_past_states': args.n_past_states,
+            'n_steps_per_action': args.n_steps_per_action,
+        }
+    }
+    
+    return env_kwargs
