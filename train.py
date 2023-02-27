@@ -3,11 +3,14 @@ import argparse
 from datetime import datetime
 from pathlib import Path
 import numpy as np
+import json
+import copy
 
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.vec_env.subproc_vec_env import SubprocVecEnv
 from stable_baselines3.common.vec_env.dummy_vec_env import DummyVecEnv
+from stable_baselines3.common.callbacks import CheckpointCallback
 
 from waves.callbacks import TensorboardCallback
 from waves.env import WavesEnv
@@ -50,6 +53,7 @@ parser.add_argument('--network_depth', type=int, default=2, help='Number of hidd
 parser.add_argument('--hidden_layer_size', type=int, default=256, help='Number of cells per hidden layer in the policy and value networks.')
 
 parser.add_argument('--verbose', default=False, action='store_true', help='If set, prints training status periodically.')
+parser.add_argument('--checkpoint_interval', type=int, default=500000, help='Every so many steps, a checkpoint of the model will be saved.')
 
 args = parser.parse_args()
 
@@ -61,6 +65,12 @@ if __name__ == '__main__':
     # create experiment dir
     exp_dir = create_log_dir(subfolder='train')
     print(f'> {exp_dir}')
+    
+    # save config
+    with open(exp_dir / 'configs.json', 'w', encoding='utf-8') as f:
+        config_save = dict(args=vars(args), env_kwargs=copy.deepcopy(env_kwargs))
+        config_save['env_kwargs']['sim_class'] = str(config_save['env_kwargs']['sim_class'])
+        json.dump(config_save, f, ensure_ascii=False, indent=4)
 
     # create env
     vec_env = make_vec_env(WavesEnv, n_envs=args.cpus, env_kwargs=env_kwargs,
@@ -71,7 +81,7 @@ if __name__ == '__main__':
     model = PPO(
         'MlpPolicy',
         vec_env, verbose=int(args.verbose),
-        tensorboard_log=exp_dir / 'tb',
+        tensorboard_log=exp_dir / 'tensorboard',
         learning_rate=args.lr,
         n_steps=args.n_steps,
         batch_size=args.batch_size,
@@ -85,8 +95,19 @@ if __name__ == '__main__':
         },
     )
 
+    # create callbacks
+    checkpoint_callback = CheckpointCallback(
+        save_freq=args.checkpoint_interval // args.cpus,
+        save_path=str(exp_dir / 'checkpoints'),
+        name_prefix='model',
+        verbose=2 if args.verbose else 0,
+    )
+    tensorboard_callback = TensorboardCallback(eval_env)
+    
     # train model
-    model.learn(total_timesteps=int(args.steps), callback=TensorboardCallback(eval_env))
+    model.learn(
+        total_timesteps=int(args.steps),
+        callback=[checkpoint_callback, tensorboard_callback])
 
     # save model
     model_path = exp_dir / 'model'
