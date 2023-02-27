@@ -39,7 +39,8 @@ def parse_sim_args(args):
     return sim_class, sim_kwargs
 
 def parse_env_args(args):
-    args = Namespace(**args)
+    if type(args) is dict:
+        args = Namespace(**args)
     sim_class, sim_kwargs = parse_sim_args(args)
 
     env_kwargs = {
