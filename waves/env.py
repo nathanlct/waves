@@ -55,8 +55,8 @@ class WavesEnv(gym.Env, ABC):
         reward, reward_info = self.compute_reward(action)
 
         info = {
-            'scaled_action': action,
-            'reward_info': reward_info,
+            "scaled_action": action,
+            "reward_info": reward_info,
         }
 
         # compute done
@@ -73,12 +73,19 @@ class WavesEnv(gym.Env, ABC):
         return state, reward, done, info
 
     def get_base_state(self):
+        # print("size", self.sim.get_obs())
+        # print(self.sim.obs_time)
+        # if self.sim.obs_time:
+        #     print("should not be")
+        # print("here", self.sim.obs_y)
+        # print(self.sim.obs_y0)
         return self.sim.get_obs()
 
     def get_state(self, append_to_memory=False):
         base_state = self.get_base_state()
         state = np.concatenate((base_state, self.memory))
-
+        # print(self.memory)
+        # assert len(state) == 1, state
         if append_to_memory and self.n_past_states > 0:
             self.memory = np.roll(self.memory, self.n_observations_base)
             self.memory[: self.n_observations_base] = base_state
@@ -86,7 +93,7 @@ class WavesEnv(gym.Env, ABC):
         return state
 
     def compute_reward(self, action):
-        return self.sim.reward()
+        return self.sim.reward(action)
 
     def reset_memory(self):
         self.memory = np.zeros(self.n_observations_base * self.n_past_states)
