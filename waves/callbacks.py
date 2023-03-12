@@ -31,15 +31,19 @@ class TensorboardCallback(BaseCallback):
         # do a rollout on test env using trained policy
         done = False
         state = self.eval_env.reset()
-        states.append(state)
+        
+        states.append(state[0])
         while not done:
-            action = self.model.predict(state, deterministic=True)[0]
-            state, reward, done, infos = self.eval_env.step(action)
-            states.append(state)
-            actions.append(infos['scaled_action'])
-            rewards.append(reward)
+            action = self.model.predict(state, deterministic=False)[0]  # TMP remove for discrete actions
+            action = [action]
+            # print(action)
+            state_lst, reward_lst, done_lst, infos_lst = self.eval_env.step(action)
+            done = done_lst[0]
+            states.append(np.copy(state_lst[0]))
+            actions.append(np.copy(infos_lst[0]['scaled_action']))
+            rewards.append(np.copy(reward_lst[0]))
             env_times.append(self.eval_env.sim.t)
-            for k, v in infos['reward_info'].items():
+            for k, v in infos_lst[0]['reward_info'].items():
                 reward_infos[k].append(v)
         actions.append(actions[-1])
         rewards.append(rewards[-1])
@@ -47,13 +51,13 @@ class TensorboardCallback(BaseCallback):
         actions = np.array(actions)  # (n_times, n_actions)
         rewards = np.array(rewards)  # (n_times,)
         t_lst = np.array(self.eval_env.sim.t_lst)  # (n_times,)
-        x_lst = np.array(self.eval_env.sim.x)  # (n_times,)
-        y_lst = np.array(self.eval_env.sim.y_lst)  # (n_times, n_samples)
+        x_lst = np.array(self.eval_env.sim.x)  # (n_xs,)
+        y_lst = np.array(self.eval_env.sim.y_lst)[:,0,:]  # (n_times, n_samples)  ([0] is first sim)
         states = np.array(states)  # (n_times, n_states)
         n_times, n_samples = y_lst.shape
         n_actions = actions.shape[1]
         n_states = states.shape[1]
-        
+
         # LOG SCALARS
         self.logger.record('eval/norm_y0', np.linalg.norm(y_lst[0]))
         self.logger.record('eval/norm_yf', np.linalg.norm(y_lst[-1]))

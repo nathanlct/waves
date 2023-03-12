@@ -7,13 +7,16 @@ from abc import ABC
 
 
 class Simulation(ABC):
-    def __init__(self, dt, dx, xmin, xmax, y0=None, y0_generator=None, tmax=None):
+    def __init__(self, dt, dx, xmin, xmax, n_sims=1, y0=None, y0_generator=None, tmax=None):
         """Initialize the simulation.
         
         dt: time delta (in seconds)
         dx: space delta
         xmin: space lower bound
         xmax: space upper bound
+        n_sims: number of sims to run in parallel (Simulations should be implemented in a
+            vectorized way, ie. step takes n_sims actions, get_obs() returns n_sims observations,
+            reward() returns n_sims rewards, y0 is of shape (n_sims, n_ys), etc)
         n_steps_per_action: number of times the simulation is updated with the same action
             (increase this to reduce the number of environment steps while keeping the same
             number of simulation steps, with the same control action applied several times)
@@ -32,6 +35,7 @@ class Simulation(ABC):
         self.xmin = xmin
         self.xmax = xmax
         self.tmax = tmax
+        self.n_sims = n_sims
 
         # initialize simulation
         if y0 is None and y0_generator is None:
@@ -52,7 +56,8 @@ class Simulation(ABC):
         self.t = 0
         
         # reset initial
-        self.x = np.arange(self.xmin, self.xmax + 1e-9, self.dx)
+        # self.x = np.tile(np.arange(self.xmin, self.xmax + 1e-9, self.dx), (self.n_sims, 1))
+        self.x = np.arange(self.xmin, self.xmax + 1e-9, self.dx)  # same x for all sims
         
         # create initial condition, try using function in a vectorized way otherwise create elements one by one
         try:
@@ -94,6 +99,7 @@ class Simulation(ABC):
 
     def norm_y(self):
         """Compute the approximate square root of the integral of y."""
+        raise NotImplementedError
         return (self.dx * np.sum(self.y * self.y)) ** 0.5
 
     def render(

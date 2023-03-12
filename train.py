@@ -12,6 +12,7 @@ from stable_baselines3.common.vec_env.dummy_vec_env import DummyVecEnv
 from waves.callbacks import TensorboardCallback
 from waves.env import WavesEnv
 from waves.utils import create_log_dir, parse_sim_args
+from waves.subproc_vec_env import MySubprocVecEnv, my_make_vec_env
 
 
 # parse CLI params
@@ -39,11 +40,12 @@ parser.add_argument('--n_steps_per_action', type=int, default=1, help='Number of
 
 # training params
 parser.add_argument('--cpus', type=int, default=1, help='Number of CPUs to use for training.')
+parser.add_argument('--envs_per_cpu', type=int, default=1, help='Number of CPUs to use for training.')
 parser.add_argument('--steps', type=float, default=1e8, help='Number of timesteps to train for.')
 parser.add_argument('--lr', type=float, default=3e-4, help='Learning rate.')
 parser.add_argument('--n_steps', type=int, default=1024, help='The number of steps to run for each environment per update '
                     '(i.e. rollout buffer size is n_steps * n_envs where n_envs is number of environment copies running in parallel).')
-parser.add_argument('--batch_size', type=int, default=1024, help='Minibatch size.')
+parser.add_argument('--batch_size', type=int, default=32768, help='Minibatch size.')
 parser.add_argument('--n_epochs', type=int, default=5, help='Number of SGD iterations per epoch.')
 parser.add_argument('--gamma', type=float, default=0.99, help='Gamma factor.')
 parser.add_argument('--network_depth', type=int, default=2, help='Number of hidden layers in the policy and value networks.')
@@ -57,17 +59,25 @@ args = parser.parse_args()
 # create config
 sim_class, sim_kwargs = parse_sim_args(args)
 
+n_envs_per_cpu = 100
+
 env_kwargs = {
     'sim_class': sim_class,
     'sim_kwargs': sim_kwargs,
-    'config': {
+    'env_config': {
         'tmax': args.tmax,
         'action_min': args.action_min,
         'action_max': args.action_max,
         'n_past_states': args.n_past_states,
         'n_steps_per_action': args.n_steps_per_action,
     },
+    'n_envs': args.envs_per_cpu,
 }
+eval_env_kwargs = dict(env_kwargs)
+eval_env_kwargs['n_envs'] = 1
+
+# export OMP_NUM_THREADS=1 && export MKL_NUM_THREADS=1
+# TODO handle reset cf TODO in subproc_vec_env
 
 if __name__ == '__main__':
     # create experiment dir
@@ -75,9 +85,17 @@ if __name__ == '__main__':
     print(f'> {exp_dir}')
 
     # create env
-    vec_env = make_vec_env(WavesEnv, n_envs=args.cpus, env_kwargs=env_kwargs,
-                           vec_env_cls=SubprocVecEnv if args.cpus > 1 else DummyVecEnv)
-    eval_env = WavesEnv(**env_kwargs)
+    # vec_env = make_vec_env(WavesEnv, n_envs=args.cpus, env_kwargs=env_kwargs,
+    #                        vec_env_cls=SubprocVecEnv if args.cpus > 1 else DummyVecEnv)
+    vec_env = my_make_vec_env(
+        WavesEnv, 
+        n_envs=args.cpus, 
+        env_kwargs=env_kwargs, 
+        vec_env_cls=MySubprocVecEnv, 
+        vec_env_kwargs=dict(n_envs_per_cpu=args.envs_per_cpu)
+    )
+    # vec_env = WavesEnv(**env_kwargs, n_cpus=2, n_envs_per_cpu=2)  # not using args.cpu bc only one cpu!
+    eval_env = WavesEnv(**eval_env_kwargs)
 
     # create model
     model = PPO(
