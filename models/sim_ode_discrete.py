@@ -26,16 +26,20 @@ def normalize(x, xmin, xmax):
 
 
 class SimODEDiscrete(Simulation):
-    def __init__(self,
-                 K=40000.0,
-                 obs_time=False,
-                 obs_y=False,
-                 obs_y0=False,
-                 obs_MMS=False,
-                 rwd_y123=0,
-                 rwd_y4=0,
-                 rwd_y4_last100=0,
-                 **kwargs):
+    def __init__(
+        self,
+        K=50578.0,
+        obs_time=False,
+        obs_y=False,
+        obs_y2=False,
+        obs_y0=False,
+        obs_MMS=False,
+        rwd_y123=0,
+        rwd_y4=0,
+        rwd_y4_last100=0,
+        rwd_dyy3=0,
+        **kwargs,
+    ):
         """
         See parent class.
 
@@ -46,7 +50,8 @@ class SimODEDiscrete(Simulation):
         """
         sim_params = {
             # "y0": lambda x: np.random.uniform(low=0.0, high=k, size=(len(x),)),
-            "y0": lambda x: np.random.uniform(low=0.0, high=K, size=(len(x),)),
+            # "y0": lambda x: np.random.uniform(low=0.0, high=K, size=(len(x),)),
+            "y0": lambda x: np.array([50000, 63748, 153125, 0]),
             "dt": 1e-4,
             "dx": 1,
             "xmin": 0,
@@ -59,16 +64,20 @@ class SimODEDiscrete(Simulation):
             raise ValueError("xmin, xmax and dx cannot be modified in this simulation.")
 
         self.K = K
-        
+
         self.obs_time = obs_time
         self.obs_y = obs_y
+        self.obs_y2 = obs_y2
         self.obs_y0 = obs_y0
         self.obs_MMS = obs_MMS
         self.rwd_y123 = rwd_y123
         self.rwd_y4 = rwd_y4
         self.rwd_y4_last100 = rwd_y4_last100
-        
-        print(f'Initializing simulation with K={K}, and state space of size {len(self.get_obs())}.')
+        self.rwd_dyy3 = rwd_dyy3
+
+        print(
+            f"Initializing simulation with K={K}, and state space of size {len(self.get_obs())}."
+        )
 
     @property
     def n_controls(self):
@@ -86,7 +95,6 @@ class SimODEDiscrete(Simulation):
         deltaS = 0.12  # taux de mort de males steriles
         deltaM = 0.1  # taux de mort de males fertiles
         deltaF = 0.04  # taux de mort de femelle
-        mus = 0.06
         gammas = 1  # preference d'accouplement de femelle avec les males fertiles
         betaE = 8  # taux de ponte
         # a = nuE + deltaE
@@ -94,6 +102,11 @@ class SimODEDiscrete(Simulation):
         # c = betaE * nu * nuE
         # y0 = self.y_lst[0]
         # K = (1 / (1 - ((deltaF * a) / c))) * y0[0]
+
+        # override
+        # u = 0.985 * deltaS * (self.y[1] + self.y[3])
+        if x[1] + x[3] <= 4 * self.K:
+            u = 0.99 * deltaS * (x[1] + x[3])
 
         assert len(x) == 4
         return np.array(
@@ -111,10 +124,10 @@ class SimODEDiscrete(Simulation):
 
     def get_obs(self):
         state = []
-        
+
         if self.obs_time:
             state.append(normalize(self.t, 0, self.tmax))
-        
+
         if self.obs_y:
             state.append(normalize(self.y[0], 0, 2 * self.K))
             state.append(normalize(self.y[1], 0, 2 * self.K))
@@ -122,7 +135,10 @@ class SimODEDiscrete(Simulation):
             # TODO y[3] can reach much larger values
             # we should probably enforce a max to make sure the observations don't blow
             state.append(normalize(self.y[3], 0, 50 * self.K))
-        
+
+        if self.obs_y2:
+            state.append(normalize(self.y[2], 0, 2 * self.K))
+
         if self.obs_y0:
             state.append(normalize(self.y[0], 0, 2 * self.K))
             state.append(normalize(self.y[1], 0, 2 * self.K))
@@ -131,32 +147,50 @@ class SimODEDiscrete(Simulation):
 
         if self.obs_MMS:
             state.append(normalize(self.y[1] + self.y[3], 0, 50 * self.K))
-        
+
         return np.array(state)
 
     def reward(self):
         reward = 0
         reward_info = {}
-        
+
         # penalize norm of first three states
         if self.rwd_y123 > 0:
-            rwd_y123 = - self.rwd_y123 * np.linalg.norm([self.y[0], self.y[1], self.y[2]]) / self.K
-            reward_info['rwd_y123'] = rwd_y123
+            rwd_y123 = (
+                -self.rwd_y123
+                * np.linalg.norm([self.y[0], self.y[1], self.y[2]])
+                / self.K
+            )
+            reward_info["rwd_y123"] = rwd_y123
             reward += rwd_y123
-        
+
         # penalize (norm of) fourth state
         if self.rwd_y4 > 0:
-            rwd_y4 = - self.rwd_y4 * self.y[3] / self.K
-            reward_info['rwd_y4'] = rwd_y4
+            rwd_y4 = -self.rwd_y4 * self.y[3] / self.K
+            reward_info["rwd_y4"] = rwd_y4
             reward += rwd_y4
-        
+
         # penalize fourth state in the last 100 seconds
         if self.rwd_y4_last100 > 0:
             if self.t > self.tmax - 100:
-                rwd_y4_last100 = - self.rwd_y4_last100 * self.y[3] / self.K
+                rwd_y4_last100 = -self.rwd_y4_last100 * self.y[3] / self.K
             else:
                 rwd_y4_last100 = 0
-            reward_info['rwd_y4_last100'] = rwd_y4_last100
+            reward_info["rwd_y4_last100"] = rwd_y4_last100
             reward += rwd_y4_last100
+
+        if self.rwd_dyy3 > 0:
+            # rwd_dyy3 = -self.rwd_dyy3 * np.abs(
+            #     (self.y_lst[-3][3] - 2 * self.y_lst[-2][3] + self.y_lst[-1][3])
+            #     / (self.dt) ** 2
+            # )
+            # pénaliser la variance sur une durée définie plutôt ?
+            rwd_dyy3 = (
+                -self.rwd_dyy3
+                * np.sqrt(np.var(self.y_lst[-int(np.ceil(10 / self.dt)) :]))
+                / self.K
+            )
+            reward_info["rwd_dyy3"] = rwd_dyy3
+            reward += rwd_dyy3
 
         return reward, reward_info
