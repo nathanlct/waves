@@ -50,8 +50,8 @@ class SimODEDiscrete(Simulation):
         """
         sim_params = {
             # "y0": lambda x: np.random.uniform(low=0.0, high=k, size=(len(x),)),
-            "y0": lambda x: np.random.uniform(low=0.0, high=K, size=(len(x),)),
-            # "y0": lambda x: np.array([50000, 63748, 153125, 0]),
+            # "y0": lambda x: np.random.uniform(low=0.0, high=K, size=(len(x),)),
+            "y0": lambda x: np.array([50000, 63748, 153125, 0]),
             "dt": 1e-4,
             "dx": 1,
             "xmin": 0,
