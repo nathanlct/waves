@@ -86,9 +86,9 @@ class SimODEDiscrete(Simulation):
 
     @property
     def n_controls(self):
-        return 1
+        return 2
 
-    def dynamics(self, x=[0, 0, 0, 0], u=[0]):
+    def dynamics(self, x=[0, 0, 0, 0], u=[0, 0]):
         """
         Dynamic of the system
         """
@@ -112,6 +112,8 @@ class SimODEDiscrete(Simulation):
         # u = 0.985 * deltaS * (self.y[1] + self.y[3])
         # if x[1] + x[3] <= 4 * self.K:
         #     u = 0.99 * deltaS * (x[1] + x[3])
+
+        u = u[0] * x[1] + u[1] * x[3]
 
         assert len(x) == 4
         return np.array(
@@ -146,7 +148,6 @@ class SimODEDiscrete(Simulation):
 
         if self.obs_MS:
             state.append(normalize(self.y[3], 0, 2 * self.K))
-
 
         if self.obs_M:
             state.append(normalize(self.y[1], 0, 2 * self.K))
