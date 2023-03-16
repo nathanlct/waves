@@ -144,6 +144,10 @@ class SimODEDiscrete(Simulation):
         if self.obs_F:
             state.append(normalize(self.y[2], 0, 2 * self.K))
 
+        if self.obs_MS:
+            state.append(normalize(self.y[3], 0, 2 * self.K))
+
+
         if self.obs_M:
             state.append(normalize(self.y[1], 0, 2 * self.K))
 
