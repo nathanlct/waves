@@ -13,7 +13,7 @@ Example training command
     python train.py SimODEDiscrete --kwargs "dict(t_norm=100)" --tmax 100.0 --dt 1e-3 \
         --action_min 0 --action_max "10 * self.sim.K" --cpus 1 --steps 1e9
 
-    python train.py SimODEDiscrete --steps 1e9 --cpus 3 --tmax 4000 --dt 1e-2 --n_steps_per_action 100 --n_past_states 0 --action_min "0" --action_max "10*self.sim.K" --sim_kwargs "dict(obs_time=False, obs_M=True, obs_F=False, obs_MS=True,  obs_y=False, obs_y0=False, rwd_y123=1, rwd_y4=0.005)" --verbose
+    python train.py SimODEDiscrete --steps 1e9 --cpus 3 --tmax 2000 --dt 1e-2 --n_steps_per_action 1000 --n_past_states 0 --action_min "0" --action_max "10*self.sim.K" --sim_kwargs "dict(obs_time=False, obs_M=True, obs_F=False, obs_MS=True,  obs_y=False, obs_y0=False, rwd_y123=1, rwd_y4=0.005)" --verbose
 
 """
 
