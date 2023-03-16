@@ -12,6 +12,9 @@ Example simulation command
 Example training command
     python train.py SimODEDiscrete --kwargs "dict(t_norm=100)" --tmax 100.0 --dt 1e-3 \
         --action_min 0 --action_max "10 * self.sim.K" --cpus 1 --steps 1e9
+
+    python train.py SimODEDiscrete --steps 1e9 --cpus 3 --tmax 4000 --dt 1e-2 --n_steps_per_action 100 --n_past_states 0 --action_min "0" --action_max "10*self.sim.K" --sim_kwargs "dict(obs_time=False, obs_M=True, obs_F=False,  obs_y=False, obs_y0=False, rwd_y123=1, rwd_y4=0.005)" --verbose
+
 """
 
 from waves.simulation import Simulation
@@ -31,9 +34,10 @@ class SimODEDiscrete(Simulation):
         K=50578.0,
         obs_time=False,
         obs_y=False,
-        obs_y2=False,
+        obs_F=False,
         obs_y0=False,
         obs_MMS=False,
+        obs_M=False,
         rwd_y123=0,
         rwd_y4=0,
         rwd_y4_last100=0,
@@ -67,7 +71,8 @@ class SimODEDiscrete(Simulation):
 
         self.obs_time = obs_time
         self.obs_y = obs_y
-        self.obs_y2 = obs_y2
+        self.obs_F = obs_F
+        self.obs_M = obs_M
         self.obs_y0 = obs_y0
         self.obs_MMS = obs_MMS
         self.rwd_y123 = rwd_y123
