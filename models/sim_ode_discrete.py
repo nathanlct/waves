@@ -136,8 +136,11 @@ class SimODEDiscrete(Simulation):
             # we should probably enforce a max to make sure the observations don't blow
             state.append(normalize(self.y[3], 0, 50 * self.K))
 
-        if self.obs_y2:
+        if self.obs_F:
             state.append(normalize(self.y[2], 0, 2 * self.K))
+
+        if self.obs_M:
+            state.append(normalize(self.y[1], 0, 2 * self.K))
 
         if self.obs_y0:
             state.append(normalize(self.y[0], 0, 2 * self.K))
