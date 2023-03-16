@@ -110,8 +110,8 @@ class SimODEDiscrete(Simulation):
 
         # override
         # u = 0.985 * deltaS * (self.y[1] + self.y[3])
-        if x[1] + x[3] <= 4 * self.K:
-            u = 0.99 * deltaS * (x[1] + x[3])
+        # if x[1] + x[3] <= 4 * self.K:
+        #     u = 0.99 * deltaS * (x[1] + x[3])
 
         assert len(x) == 4
         return np.array(
