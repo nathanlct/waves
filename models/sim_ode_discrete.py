@@ -88,13 +88,14 @@ class SimODEDiscrete(Simulation):
 
     @property
     def n_controls(self):
-        return 2
+        return 1
 
-    def dynamics(self, x=[0, 0, 0, 0], u=[0, 0]):
+    def dynamics(self, x=[0, 0, 0, 0], u=[0]):
         """
         Dynamic of the system
         """
-        u = np.abs(u[0] * x[1] + x[3] * u[1] / (100))
+        # u = np.abs(u[0] * x[1] + x[3] * u[1] / (100))
+        u = np.abs(u[0] * x[1])
         u = min(u, 10 * self.K)
         nu = 0.49  # caractere de differentiation
         nuE = 0.25  # taux d'eclosion
@@ -180,7 +181,7 @@ class SimODEDiscrete(Simulation):
         # penalize (norm of) fourth state
         if self.rwd_y4 > 0:
             rwd_y4 = -self.rwd_y4 * (
-                self.y[3] / self.K + max(0, (self.y[3] / self.K - 20) ** 2)
+                self.y[3] / self.K + max(0, (self.y[3] / self.K - 30) ** 2)
             )
             reward_info["rwd_y4"] = rwd_y4
             reward += rwd_y4
