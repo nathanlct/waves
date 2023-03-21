@@ -43,11 +43,13 @@ done = False
 
 if args.plot:
     print("here")
-    x_range = np.linspace(0, 10 * env.sim.K, 1000)
+    x_range = np.linspace(-1, 1, 10000)
     control_action = []
     for val in x_range:
         action, _ = model.predict(np.array([val]), deterministic=True)
-        action = (action + 1.0) * (
+        # print(action)
+        # print(len(action))
+        action = (action[0] + 1.0) * (
             env.action_max - env.action_min
         ) / 2.0 + env.action_min
         control_action.append(action)
