@@ -66,6 +66,11 @@ parser.add_argument('--network_depth', type=int, default=2,
 parser.add_argument('--hidden_layer_size', type=int, default=256,
                     help='Number of cells per hidden layer in the policy and value networks.')
 
+parser.add_argument('--discrete', default=False, action='store_true',
+                    help='If set, use a discrete policy instead of a continuous one.')
+parser.add_argument('--discrete_n_actions', type=int, default=100, help='If --discrete is set, '
+                    'this defines how many discrete actions there are in the [--action_min, --action_max] range.')
+
 parser.add_argument('--verbose', default=False, action='store_true',
                     help='If set, prints training status periodically.')
 parser.add_argument('--checkpoint_interval', type=int, default=500000,

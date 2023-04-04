@@ -31,18 +31,27 @@ class WavesEnv(gym.Env, ABC):
         self.n_actions = self.sim.n_controls
         self.action_min = eval(config["action_min"])
         self.action_max = eval(config["action_max"])
-        self.action_space = gym.spaces.Box(
-            low=-1.0, high=1.0, shape=(self.n_actions,), dtype=np.float32
-        )
+        if self.discrete:
+            self.action_space = gym.spaces.Discrete(self.discrete_n_actions)
+        else:
+            self.action_space = gym.spaces.Box(
+                low=-1.0, high=1.0, shape=(self.n_actions,), dtype=np.float32
+            )
 
         # reset env
         self.reset()
 
     def step(self, action):
-        # convert action from [-1, 1] to [action_min, action_max]
-        action = (action + 1.0) * (
-            self.action_max - self.action_min
-        ) / 2.0 + self.action_min
+        if self.discrete:
+            # convert action in {0, ..., discrete_n_actions - 1} to [action_min, action_max]
+            action = action / self.discrete_n_actions * \
+                (self.action_max - self.action_min) + self.action_min
+            action = np.array([action])
+        else:
+            # convert action from [-1, 1] to [action_min, action_max]
+            action = (action + 1.0) * (
+                self.action_max - self.action_min
+            ) / 2.0 + self.action_min
 
         # step simulation with control
         for _ in range(self.n_steps_per_action):
