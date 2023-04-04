@@ -22,7 +22,8 @@ class WavesEnv(gym.Env, ABC):
         self.reset_memory()
 
         # observation space
-        self.n_observations = self.n_observations_base * (1 + self.n_past_states)
+        self.n_observations = self.n_observations_base * \
+            (1 + self.n_past_states)
         self.observation_space = gym.spaces.Box(
             low=-np.inf, high=np.inf, shape=(self.n_observations,), dtype=np.float32,
         )
@@ -72,7 +73,8 @@ class WavesEnv(gym.Env, ABC):
         done = False
         if self.sim.t >= self.tmax:
             done = True
-            info["TimeLimit.truncated"] = True  # for SB3 end-of-horizon bootstrapping
+            # for SB3 end-of-horizon bootstrapping
+            info["TimeLimit.truncated"] = True
 
         # end early if norm blows up
         if self.sim.norm_y() > 1000 * self.sim.K:
