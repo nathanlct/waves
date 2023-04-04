@@ -52,6 +52,8 @@ def parse_env_args(args):
             'action_max': args.action_max,
             'n_past_states': args.n_past_states,
             'n_steps_per_action': args.n_steps_per_action,
+            'discrete': args.discrete,
+            'discrete_n_actions': args.discrete_n_actions,
         }
     }
     
