@@ -32,6 +32,8 @@ class WavesEnv(gym.Env, ABC):
         self.n_actions = self.sim.n_controls
         self.action_min = eval(config["action_min"])
         self.action_max = eval(config["action_max"])
+        self.discrete = config["discrete"]
+        self.discrete_n_actions = config["discrete_n_actions"]
         if self.discrete:
             self.action_space = gym.spaces.Discrete(self.discrete_n_actions)
         else:
