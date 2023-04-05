@@ -116,6 +116,7 @@ if __name__ == '__main__':
                 'vf': [args.hidden_layer_size] * args.network_depth,
             }
         },
+        device='cpu',
     )
 
     # create callbacks
