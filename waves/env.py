@@ -44,7 +44,7 @@ class WavesEnv(gym.Env, ABC):
         # reset env
         self.reset()
 
-    def step(self, action):
+    def normalize_action(self, action):
         if self.discrete:
             # convert action in {0, ..., discrete_n_actions - 1} to [action_min, action_max]
             action = action / self.discrete_n_actions * \
@@ -55,6 +55,10 @@ class WavesEnv(gym.Env, ABC):
             action = (action + 1.0) * (
                 self.action_max - self.action_min
             ) / 2.0 + self.action_min
+        return action
+
+    def step(self, action):
+        action = self.normalize_action(action)
 
         # step simulation with control
         for _ in range(self.n_steps_per_action):

@@ -48,7 +48,7 @@ class SimODEDiscrete(Simulation):
         rwd_x: coefficient in front of the "x" term in the reward function (defaut 0 = don't add that term)
         """
         sim_params = {
-            "y0": lambda x: np.random.uniform(low=0.0, high=K, size=(len(x),)),
+            "y0": lambda x: np.random.uniform(low=0.0, high=5*K, size=(len(x),)),
             # "y0": lambda x: np.array([50000, 63748, 153125, 0]),
             "dt": 1e-4,
             "dx": 1,
@@ -120,43 +120,54 @@ class SimODEDiscrete(Simulation):
         current_y = np.copy(self.y)
         self.y = np.array(current_y) + self.dt * self.dynamics(current_y, u)
 
-    def get_obs(self):
+    def get_obs(self, **kwargs):
         state = []
+
+        y = self.y
 
         if self.obs_time:
             state.append(normalize(self.t, 0, self.tmax))
 
         if self.obs_y:
-            state.append(normalize(self.y[0], 0, 2 * self.K))
-            state.append(normalize(self.y[1], 0, 2 * self.K))
-            state.append(normalize(self.y[2], 0, 2 * self.K))
+            state.append(normalize(y[0], 0, 2 * self.K))
+            state.append(normalize(y[1], 0, 2 * self.K))
+            state.append(normalize(y[2], 0, 2 * self.K))
             # TODO y[3] can reach much larger values
             # we should probably enforce a max to make sure the observations don't blow
-            state.append(normalize(self.y[3], 0, 50 * self.K))
+            state.append(normalize(y[3], 0, 50 * self.K))
 
         if self.obs_y0:
-            state.append(normalize(self.y[0], 0, 2 * self.K))
-            state.append(normalize(self.y[1], 0, 2 * self.K))
-            state.append(normalize(self.y[2], 0, 2 * self.K))
-            state.append(normalize(self.y[3], 0, 50 * self.K))
+            state.append(normalize(y[0], 0, 2 * self.K))
+            state.append(normalize(y[1], 0, 2 * self.K))
+            state.append(normalize(y[2], 0, 2 * self.K))
+            state.append(normalize(y[3], 0, 50 * self.K))
 
         if self.obs_MMS:
-            state.append(normalize(self.y[1] + self.y[3], 0, 50 * self.K))
+            mms = kwargs.get('MMS', y[1] + y[3])
+            state.append(normalize(mms, 0, 100 * self.K))
+            state.append(normalize(min(mms, 50 * self.K), 0, 50 * self.K))
+            state.append(normalize(min(mms, 10 * self.K), 0, 10 * self.K))
+            state.append(normalize(min(mms, self.K), 0, self.K))
+            state.append(normalize(min(mms, 5000), 0, 5000))
+            state.append(normalize(min(mms, 500), 0, 500))
+            state.append(normalize(min(mms, 50), 0, 50))
+            state.append(normalize(min(mms, 5), 0, 5))
 
         if self.obs_MS:
-            state.append(normalize(self.y[3], 0, 50 * self.K))
+            state.append(normalize(y[3], 0, 50 * self.K))
 
         if self.obs_F:
-            state.append(normalize(self.y[2], 0, 2 * self.K))
-            state.append(normalize(min(self.y[2], 5000), 0, 5000))
-            state.append(normalize(min(self.y[2], 500), 0, 500))
-            state.append(normalize(min(self.y[2], 50), 0, 50))
-            state.append(normalize(min(self.y[2], 5), 0, 5))
+            state.append(normalize(y[2], 0, 2 * self.K))
+            state.append(normalize(min(y[2], 5000), 0, 5000))
+            state.append(normalize(min(y[2], 500), 0, 500))
+            state.append(normalize(min(y[2], 50), 0, 50))
+            state.append(normalize(min(y[2], 5), 0, 5))
 
         if self.obs_all_females:
             # F*(M+\gamma_s M_s)/M
-            all_females = self.y[2] * (1 + self.gammas * self.y[3] / self.y[1])
+            all_females = kwargs.get('F', y[2] * (1 + self.gammas * y[3] / y[1]))
             state.append(normalize(all_females, 0, 100 * self.K))
+            state.append(normalize(min(all_females, 50 * self.K), 0, 50 * self.K))
             state.append(normalize(min(all_females, 10 * self.K), 0, 10 * self.K))
             state.append(normalize(min(all_females, self.K), 0, self.K))
             state.append(normalize(min(all_females, 5000), 0, 5000))
