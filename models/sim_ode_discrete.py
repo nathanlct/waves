@@ -97,7 +97,8 @@ class SimODEDiscrete(Simulation):
         """
         Dynamic of the system
         """
-        u = np.abs(u[0])
+        u = np.abs(u[0] * (x[1]+x[3]))
+        u = min(u, 10 * self.K)
 
         # a = nuE + deltaE
         # b = (1 - nu) * nuE
@@ -190,7 +191,10 @@ class SimODEDiscrete(Simulation):
 
         # penalize (norm of) fourth state
         if self.rwd_y4 > 0:
-            rwd_y4 = - self.rwd_y4 * self.y[3] / self.K
+            rwd_y4 = -self.rwd_y4 * (
+                self.y[3] / self.K + max(0, (self.y[3] / self.K - 30)) ** 2
+            )
+            # rwd_y4 = - self.rwd_y4 * self.y[3] / self.K
             reward_info['rwd_y4'] = rwd_y4
             reward += rwd_y4
 

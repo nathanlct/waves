@@ -111,10 +111,10 @@ if __name__ == '__main__':
         n_epochs=args.n_epochs,
         gamma=args.gamma,
         policy_kwargs={
-            'net_arch': {
+            'net_arch': [{
                 'pi': [args.hidden_layer_size] * args.network_depth,
                 'vf': [args.hidden_layer_size] * args.network_depth,
-            }
+            }]
         },
         device='cpu',
     )
