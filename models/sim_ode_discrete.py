@@ -192,11 +192,13 @@ class SimODEDiscrete(Simulation):
         # penalize (norm of) fourth state
         if self.rwd_y4 > 0:
             rwd_y4 = -self.rwd_y4 * (
-                self.y[3] / self.K + max(0, (self.y[3] / self.K - 30)) ** 2
+                self.y[3] / self.K + max(0, (self.y[3] / self.K - 60)) ** 2
             )
             # rwd_y4 = - self.rwd_y4 * self.y[3] / self.K
             reward_info['rwd_y4'] = rwd_y4
             reward += rwd_y4
+
+
 
         # penalize fourth state in the last 100 seconds
         if self.rwd_y4_last100 > 0:

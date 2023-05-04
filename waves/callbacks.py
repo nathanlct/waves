@@ -78,7 +78,7 @@ class TensorboardCallback(BaseCallback):
             plt.tight_layout()
             self.logger.record(f'eval/{name}', Figure(fig, close=True),
                                exclude=('stdout', 'log', 'json', 'csv'))
-            fig.clear()
+            # fig.clear()
             plt.close(fig)
 
         # y0 and yf by x
@@ -165,5 +165,5 @@ class TensorboardCallback(BaseCallback):
         plt.tight_layout()
         self.logger.record('eval/heatmap' + ('_log_scale' if log_scale else ''),
                            Figure(fig, close=True), exclude=('stdout', 'log', 'json', 'csv'))
-        fig.clear()
+        # fig.clear()
         plt.close(fig)
