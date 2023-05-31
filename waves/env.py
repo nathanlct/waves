@@ -57,8 +57,9 @@ class WavesEnv(gym.Env, ABC):
             ) / 2.0 + self.action_min
         return action
 
-    def step(self, action):
-        action = self.normalize_action(action)
+    def step(self, action, normalize_action=True):
+        if normalize_action:
+            action = self.normalize_action(action)
 
         # step simulation with control
         for _ in range(self.n_steps_per_action):
