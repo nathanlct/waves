@@ -11,11 +11,9 @@ import json
 
 from waves.env import WavesEnv
 from waves.utils import parse_env_args
+import pprint
 
-# Define the function f(x,y)
 
-
-# PATH = 'logs/train/1681967450_19Apr23_22h10m50s/checkpoints/model_5500000_steps.zip'
 PATH = 'logs/train/1681964053_19Apr23_21h14m13s/checkpoints/model_3000000_steps.zip'
 
 
@@ -25,8 +23,13 @@ model = PPO.load(str(model_path))
 with open(str(model_path.parent.parent / "configs.json"), "r") as f:
     configs = json.load(f)
 env_kwargs = parse_env_args(configs["args"])
+pprint.pprint(env_kwargs)
 
+# create fig
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
 
+# plot 3D surface
 def normalize(x, xmin, xmax):
     """Transform x from [xmin, xmax] range to [-1, 1] range.
     """
@@ -75,18 +78,43 @@ for i in range(len(x_mms)):
     for j in range(len(y_f)):
         Z[j, i] = f(x_mms[i], y_f[j])
 
+ax.plot_surface(X, Y, Z, alpha=0.7)
 
-# Create a 3D plot
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.plot_surface(X, Y, Z)
+for _ in range(1):
+    # create env
+    env = WavesEnv(**env_kwargs)
+
+    # run sim
+    done = False
+    state = env.reset()
+    actions = []
+    while not done:
+        action, _ = model.predict(state, deterministic=True)
+        state, reward, done, info = env.step(action)
+        actions.append(info['scaled_action'])
+    actions.append(actions[-1])
+
+    actions = np.array(actions)[:, 0]  # (n_times, n_actions)
+    t_lst = np.array(env.sim.t_lst)  # (n_times,)
+    y_lst = np.array(env.sim.y_lst)  # (n_times, n_samples)
+
+    gammas = 1
+    mms = y_lst[:, 1] + y_lst[:, 3]
+    all_females = y_lst[:, 2] * (1 + gammas * y_lst[:, 3] / y_lst[:, 1])
+
+    n_steps_per_action = env_kwargs['config']['n_steps_per_action']
+    mms = mms[::n_steps_per_action]
+    all_females = all_females[::n_steps_per_action]
+
+    # actions = np.repeat(actions, n_steps_per_action)
+    # actions = np.append(actions, actions[-1])
+
+    # 3D plot
+    ax.plot(mms, all_females, actions)
+    ax.scatter(mms[0], all_females[0], actions[0], s=10, marker='o', label='start')
 
 ax.invert_xaxis()
-
-# Set the labels for the axes
 ax.set_xlabel('M+MS')
 ax.set_ylabel('F*(M+gamma_s*M_s)/M')
 ax.set_zlabel('u')
-
-# Show the plot
 plt.show()
