@@ -27,20 +27,12 @@ env_kwargs = parse_env_args(configs["args"])
 
 def get_action(MMS, F):
     action = 0
-    if MMS < 200:
-        if F == 0 or np.log(F) < np.log(200) - 4:
-            action = 10 # min(3, 3*F)
-        # elif np.log(F) < np.log(200) - 3:
-        #     action = 500000 * (4 + np.log(F / 200))
-        else:
-            action = 200000
+    if F == 0 or np.log(MMS) > np.log(F) + 4:
+        action = 10 #  min(3, 3*F)
+    # elif np.log(MMS) > np.log(F) + 3:
+    #     action = 500000 * (4 - np.log(MMS / F))
     else:
-        if F == 0 or np.log(MMS) > np.log(F) + 4:
-            action = 10 #  min(3, 3*F)
-        # elif np.log(MMS) > np.log(F) + 3:
-        #     action = 500000 * (4 - np.log(MMS / F))
-        else:
-            action = 200000
+        action = 200000
     return action
 
 
