@@ -9,7 +9,7 @@ from abc import ABC
 class Simulation(ABC):
     def __init__(self, dt, dx, xmin, xmax, y0=None, y0_generator=None, tmax=None):
         """Initialize the simulation.
-        
+
         dt: time delta (in seconds)
         dx: space delta
         xmin: space lower bound
@@ -116,6 +116,7 @@ class Simulation(ABC):
             #         for i in range(len(curves[1]))
             #     ],
             # )
+            # for i, curve in enumerate(curves[:-1]):
             for i, curve in enumerate(curves):
                 plt.plot(self.t_lst, curve)
             plt.show()

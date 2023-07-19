@@ -14,8 +14,8 @@ Example training command
         --action_min 0 --action_max "10 * self.sim.K" --cpus 1 --steps 1e9
 
     python train.py SimODEDiscrete --steps 1e9 --cpus 3 --tmax 4000 --dt 1e-2 --n_steps_per_action 100 --n_past_states 0 --action_min "0" --action_max "10" --sim_kwargs "dict(obs_time=False, obs_M=True, obs_F=False,  obs_y=False, obs_MS = True, obs_y0=False, rwd_y123=1, rwd_y4=0.005)" --verbose
-
 """
+
 
 from waves.simulation import Simulation
 
@@ -23,8 +23,7 @@ import numpy as np
 
 
 def normalize(x, xmin, xmax):
-    """Transform x from [xmin, xmax] range to [-1, 1] range.
-    """
+    """Transform x from [xmin, xmax] range to [-1, 1] range."""
     return (x - xmin) / (xmax - xmin) * 2.0 - 1.0
 
 
@@ -49,12 +48,12 @@ class SimODEDiscrete(Simulation):
         See parent class.
 
         K: state space is [0, K]^4, action space is [0, 10*K]
-        
+
         obs_x: whether to add observation "x" to the state space (default False = don't add that state)
         rwd_x: coefficient in front of the "x" term in the reward function (defaut 0 = don't add that term)
         """
         sim_params = {
-            "y0": lambda x: np.random.uniform(low=0.0, high=K, size=(len(x),)),
+            "y0": lambda x: np.random.uniform(low=0.0, high=5 * K, size=(len(x),)),
             # "y0": lambda x: np.array([50000, 63748, 153125, 0]),
             "dt": 1e-4,
             "dx": 1,
@@ -66,7 +65,14 @@ class SimODEDiscrete(Simulation):
 
         if self.xmin != 0 or self.xmax != 3 or self.dx != 1:
             raise ValueError("xmin, xmax and dx cannot be modified in this simulation.")
-
+        self.nu = 0.49  # caractere de differentiation
+        self.nuE = 0.25  # taux d'eclosion
+        self.deltaE = 0.03  # taux d'Oeufs gattes
+        self.deltaS = 0.12  # taux de mort de males steriles
+        self.deltaM = 0.1  # taux de mort de males fertiles
+        self.deltaF = 0.04  # taux de mort de femelle
+        self.gammas = 1  # preference d'accouplement de femelle avec les males fertiles
+        self.betaE = 8  # taux de ponte
         self.K = K
 
         self.obs_time = obs_time
@@ -94,16 +100,12 @@ class SimODEDiscrete(Simulation):
         Dynamic of the system
         """
         # u = np.abs(u[0] * x[1] + x[3] * u[1] / (100))
-        u = np.abs(u[0] * x[1])
-        u = min(u, 10 * self.K)
-        nu = 0.49  # caractere de differentiation
-        nuE = 0.25  # taux d'eclosion
-        deltaE = 0.03  # taux d'Oeufs gattes
-        deltaS = 0.12  # taux de mort de males steriles
-        deltaM = 0.1  # taux de mort de males fertiles
-        deltaF = 0.04  # taux de mort de femelle
-        gammas = 1  # preference d'accouplement de femelle avec les males fertiles
-        betaE = 8  # taux de ponte
+        # u = np.abs(u[0] * x[1])
+        u = np.abs(u[0])
+        # Override for testing
+        # alpha = 11
+        # u = min(max(alpha - (10 * alpha / 15) * (x[1] / self.K), 0), 10 * self.K) * x[1]
+        # u = min(u, 10 * self.K)
         # a = nuE + deltaE
         # b = (1 - nu) * nuE
         # c = betaE * nu * nuE
@@ -118,14 +120,17 @@ class SimODEDiscrete(Simulation):
         assert len(x) == 4
         return np.array(
             [
-                betaE * x[2] * (1 - (x[0] / self.K)) - (nuE + deltaE) * x[0],
-                (1 - nu) * nuE * x[0] - deltaM * x[1],
-                nu * nuE * x[0] * (x[1] / (x[1] + (gammas * x[3]))) - deltaF * x[2],
-                u - deltaS * x[3],
+                self.betaE * x[2] * (1 - (x[0] / self.K))
+                - (self.nuE + self.deltaE) * x[0],
+                (1 - self.nu) * self.nuE * x[0] - self.deltaM * x[1],
+                self.nu * self.nuE * x[0] * (x[1] / (x[1] + (self.gammas * x[3])))
+                - self.deltaF * x[2],
+                u - self.deltaS * x[3],
             ]
         )
 
     def update_y(self, u=0):
+        # Update with the current numerical scheme
         current_y = np.copy(self.y)
         self.y = np.array(current_y) + self.dt * self.dynamics(current_y, u)
 
