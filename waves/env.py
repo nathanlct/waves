@@ -18,12 +18,14 @@ class WavesEnv(gym.Env, ABC):
         # memory
         self.sim.reset()
         self.n_observations_base = self.sim.get_obs().shape[0]
-        self.n_past_states = config["n_past_states"]
+        self.mem_n_past_states = config["mem_n_past_states"]
+        self.mem_default_value = config["mem_default_value"]
+        self.mem_save_every = config["mem_save_every"]
         self.reset_memory()
 
         # observation space
         self.n_observations = self.n_observations_base * \
-            (1 + self.n_past_states)
+            (1 + self.mem_n_past_states)
         self.observation_space = gym.spaces.Box(
             low=-np.inf, high=np.inf, shape=(self.n_observations,), dtype=np.float32,
         )
@@ -65,6 +67,9 @@ class WavesEnv(gym.Env, ABC):
         for _ in range(self.n_steps_per_action):
             self.sim.step(u=action)
 
+        # add one environment step to memory counter
+        self.steps_since_last_appended_in_memory += 1
+
         # update state
         state = self.get_state(append_to_memory=True)
 
@@ -97,9 +102,11 @@ class WavesEnv(gym.Env, ABC):
         base_state = self.get_base_state()
         state = np.concatenate((base_state, self.memory))
 
-        if append_to_memory and self.n_past_states > 0:
+        if append_to_memory and self.mem_n_past_states > 0 \
+                and self.steps_since_last_appended_in_memory % self.mem_save_every == 0:
             self.memory = np.roll(self.memory, self.n_observations_base)
             self.memory[: self.n_observations_base] = base_state
+            self.steps_since_last_appended_in_memory = 0
 
         return state
 
@@ -107,7 +114,9 @@ class WavesEnv(gym.Env, ABC):
         return self.sim.reward()
 
     def reset_memory(self):
-        self.memory = np.zeros(self.n_observations_base * self.n_past_states)
+        self.memory = np.full(self.n_observations_base * self.mem_n_past_states,
+                              self.mem_default_value, dtype=np.float32)
+        self.steps_since_last_appended_in_memory = 0
 
     def reset(self):
         # reset sim
@@ -118,5 +127,6 @@ class WavesEnv(gym.Env, ABC):
 
         # get initial state
         s0 = self.get_state(append_to_memory=True)
+        self.steps_since_last_appended_in_memory = 0
 
         return s0

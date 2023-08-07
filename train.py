@@ -43,8 +43,12 @@ parser.add_argument('--action_min', type=str, default='-1.0', help='Minimum cont
                     'constant, eg. "self.sim.k * 10".')
 parser.add_argument('--action_max', type=str, default='1.0', help='Maximum control value. Could use a simulation-specific '
                     'constant, eg. "self.sim.k * 10".')
-parser.add_argument('--n_past_states', type=int, default=0,
-                    help='Number of previous states to add in the current state (memory).')
+parser.add_argument('--mem_n_past_states', type=int, default=0,
+                    help='(Memory) Number of previous states to add in the current state. Default 0.')
+parser.add_argument('--mem_default_value', type=float, default=0.0,
+                    help='(Memory) Default value for not-yet-existing past states at initialization. Default 0.')
+parser.add_argument('--mem_save_every', type=int, default=1,
+                    help='(Memory) Save the current state in memory every that many environment steps. Default 1.')
 parser.add_argument('--n_steps_per_action', type=int, default=1, help='Number of simulation steps for each environment step '
                     '(ie. the same action is applied several times if this is set to a value large than 1).')
 
