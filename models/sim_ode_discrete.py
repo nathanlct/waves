@@ -27,7 +27,7 @@ def normalize(x, xmin, xmax):
 
 class SimODEDiscrete(Simulation):
     def __init__(self,
-                 K=50578.0,
+                 K=50000.0,
                  obs_time=False,
                  obs_y=False,
                  obs_y0=False,
