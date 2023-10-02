@@ -106,8 +106,9 @@ class TensorboardCallback(BaseCallback):
         plot('rewards_by_t', env_times, reward_infos,
              xlabel='t', ylabel='r_i(t)', title='Breakdown of reward components by time')
 
-        self.plot_heatmap(y_lst, log_scale=False)
-        self.plot_heatmap(y_lst, log_scale=True)
+        if self.eval_env.mem_n_past_states == 0:
+            self.plot_heatmap(y_lst, log_scale=False)
+            self.plot_heatmap(y_lst, log_scale=True)
 
     def plot_heatmap(self, y_lst, log_scale=False):
         # Retrieve sim
