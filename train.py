@@ -100,8 +100,8 @@ if __name__ == '__main__':
         json.dump(config_save, f, ensure_ascii=False, indent=4)
 
     # create env
-    vec_env = make_vec_env(WavesEnv, n_envs=args.cpus, env_kwargs=env_kwargs,
-                           vec_env_cls=SubprocVecEnv if args.cpus > 1 else DummyVecEnv)
+    vec_env = make_vec_env(WavesEnv, n_envs=args.cpus, env_kwargs=env_kwargs,)
+                        #    vec_env_cls=SubprocVecEnv if args.cpus > 1 else DummyVecEnv)
     eval_env = WavesEnv(**env_kwargs)
 
     # create model
