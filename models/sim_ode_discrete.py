@@ -16,7 +16,6 @@ Example training command
     python train.py SimODEDiscrete --steps 1e9 --cpus 3 --tmax 4000 --dt 1e-2 --n_steps_per_action 100 --n_past_states 0 --action_min "0" --action_max "10" --sim_kwargs "dict(obs_time=False, obs_M=True, obs_F=False,  obs_y=False, obs_MS = True, obs_y0=False, rwd_y123=1, rwd_y4=0.005)" --verbose
 """
 
-
 from waves.simulation import Simulation
 
 import numpy as np
@@ -113,6 +112,11 @@ class SimODEDiscrete(Simulation):
         # K = (1 / (1 - ((deltaF * a) / c))) * y0[0]
 
         # override
+        alpha = 11.911134053367215
+        p1 = -0.931593159315931
+        p2 = 0.32773277327732786
+        u = max(alpha * (p2 - max((self.y[1] / self.K - 1), p1)), 0) * self.y[1]
+        print(u)
         # u = 0.985 * deltaS * (self.y[1] + self.y[3])
         # if x[1] + x[3] <= 4 * self.K:
         #     u = 0.99 * deltaS * (x[1] + x[3])

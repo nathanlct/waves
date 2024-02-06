@@ -97,7 +97,14 @@ class Simulation(ABC):
         return (self.dx * np.sum(self.y * self.y)) ** 0.5
 
     def render(
-        self, path=None, display=True, fps=30.0, dpi=100, speed=1.0, no_video=True
+        self,
+        path=None,
+        display=True,
+        fps=30.0,
+        dpi=100,
+        speed=1.0,
+        no_video=True,
+        no_final_curve=False,
     ):
         """Render the simulation from t=0 to the current time."""
         # compute which frames should be display to get the desired FPS and speed
@@ -116,8 +123,9 @@ class Simulation(ABC):
             #         for i in range(len(curves[1]))
             #     ],
             # )
-            # for i, curve in enumerate(curves[:-1]):
-            for i, curve in enumerate(curves):
+            last_index = -1 if no_final_curve else 0
+            for i, curve in enumerate(curves[:last_index]):
+                # for i, curve in enumerate(curves):
                 plt.plot(self.t_lst, curve)
             plt.show()
             return None

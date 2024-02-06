@@ -45,7 +45,8 @@ done = False
 
 
 if args.plot:
-    x_range = np.linspace(-2, 1, 10000)
+    x_range = np.linspace(-1, 1, 10000)
+    x_range_denormalized = [(1 + val) for val in x_range]
     control_action = []
     for val in x_range:
         action, _ = model.predict(np.array([val]), deterministic=True)
@@ -55,7 +56,10 @@ if args.plot:
             env.action_max - env.action_min
         ) / 2.0 + env.action_min
         control_action.append(action)
-    plt.plot(x_range, control_action)
+    plt.plot(x_range_denormalized, control_action)
+    plt.xlabel("Normalized number of male mosquitoes M(t)/K")
+    plt.ylabel("Value of the control")
+
     plt.show()
 
     # Below if only for an affine function with maximum 15.
@@ -77,4 +81,12 @@ while not done:
     obs, reward, done, info = env.step(action)
 
 # render
-env.sim.render(path=None, display=True, fps=30.0, dpi=100, speed=1.0, no_video=True)
+env.sim.render(
+    path=None,
+    display=True,
+    fps=30.0,
+    dpi=100,
+    speed=1.0,
+    no_video=True,
+    no_final_curve=True,
+)
