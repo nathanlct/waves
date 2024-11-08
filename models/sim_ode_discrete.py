@@ -1,6 +1,6 @@
 """
 Simulating
-    y'(t) = f(y(t), u(t)) avec y(t) = (y_1(t), y_2(t), y_3(t), y_4(t))
+    y'(t) = f(y(t), u(t)) avec y(t) = (y_1(t), y_2(t), y_3(t), y_4(t),y_5(t))
 Boundary conditions
     Initial condition choosen randomly in [0, K]^4
 Observations
@@ -113,6 +113,7 @@ class SimODEDiscrete(Simulation):
                 self.nu * self.nuE * x[0] *
                 (x[1] / (x[1] + (self.gammas * x[3]))) - self.deltaF * x[2],
                 u - self.deltaS * x[3],
+                self.nu*self.nuE *(x[3] /  (x[1] + (self.gammas * x[3])))-self.deltaF *x[4],
             ]
         )
 
@@ -135,12 +136,14 @@ class SimODEDiscrete(Simulation):
             # TODO y[3] can reach much larger values
             # we should probably enforce a max to make sure the observations don't blow
             state.append(normalize(y[3], 0, 50 * self.K))
+            state.append(normalize(y[4], 0, 50 * self.K))
 
         if self.obs_y0:
             state.append(normalize(y[0], 0, 2 * self.K))
             state.append(normalize(y[1], 0, 2 * self.K))
             state.append(normalize(y[2], 0, 2 * self.K))
             state.append(normalize(y[3], 0, 50 * self.K))
+            state.append(normalize(y[4], 0, 50 * self.K))
 
         if self.obs_MMS:
             mms = kwargs.get('MMS', y[1] + y[3])
@@ -165,7 +168,7 @@ class SimODEDiscrete(Simulation):
 
         if self.obs_all_females:
             # F*(M+\gamma_s M_s)/M
-            all_females = kwargs.get('F', y[2] * (1 + self.gammas * y[3] / y[1]))
+            all_females = kwargs.get('F', y[2] +y[4])
             state.append(normalize(all_females, 0, 100 * self.K))
             state.append(normalize(min(all_females, 50 * self.K), 0, 50 * self.K))
             state.append(normalize(min(all_females, 10 * self.K), 0, 10 * self.K))
