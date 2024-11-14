@@ -213,7 +213,7 @@ class SimODEDiscrete5Eq(Simulation):
             reward += rwd_y5
         
         if self.rwd_u > 0:
-            rwd_u = -self.rwd_u * action / self.K
+            rwd_u = -self.rwd_u * float(action) / self.K
             reward_info["rwd_u"] = rwd_u
             reward += rwd_u
 
