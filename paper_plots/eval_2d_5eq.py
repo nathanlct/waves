@@ -17,7 +17,8 @@ from waves.utils import parse_env_args
 # PATH = 'logs/train/1681967450_19Apr23_22h10m50s/checkpoints/model_5500000_steps.zip'
 # PATH = 'logs/train/1683042542_02May23_08h49m02s/checkpoints/model_500000_steps.zip'
 # PATH = 'logs/train/1683042542_02May23_08h49m02s/checkpoints/model_4000000_steps.zip'
-PATH = '/Users/nathan/dev/moustiques_paper/1691464761_07Aug23_20h19m21s/checkpoints/model_2999970_steps.zip'  # latest model in paper
+# PATH = '/Users/nathan/dev/moustiques_paper/1691464761_07Aug23_20h19m21s/checkpoints/model_2999970_steps.zip'  # latest model in paper
+PATH = '/Users/nathan/dev/waves/logs/train/1731086720_08Nov24_18h25m20s/checkpoints/model_3000000_steps.zip'  # model trained with 5 equations
 LOG_SCALE = True
 USE_EXPLICIT_ACTION = True # True
 ACTION_NOISE_STD = 0  # 10
@@ -63,11 +64,36 @@ env_kwargs = parse_env_args(configs["args"])
 #    return action
 
 # REGRESSION 2
-def get_action(total_males, total_females):
-    if total_females == 0 or (total_males != 0 and np.log(total_males / total_females) > 4):
-        action = 0  # 5
-    else:
-        action = 500000  # limite 165435
+# def get_action(total_males, total_females):
+#     if total_females == 0 or (total_males != 0 and np.log(total_males / total_females) > 4):
+#         action = 0  # 5
+#     else:
+#         action = 500000  # limite 165435
+#     return action
+
+import math
+
+# try sth new: lets first define two points (x1,y1) and (x2,y2) -- (total_males, total_females) for my new boundary
+x1 = 1e-1
+y1 = 1
+x2 = 1e7
+y2 = 20
+def get_action(total_males, total_females, u_min=10, u_max=500000):
+    x3 = total_males
+    y3 = total_females
+    D = (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)
+    
+    # Calculate the determinant in log-log space
+    u1, v1 = math.log(x1), math.log(y1)
+    u2, v2 = math.log(x2), math.log(y2)
+    u3, v3 = math.log(x3), math.log(y3)
+    D = (u2 - u1) * (v3 - v1) - (v2 - v1) * (u3 - u1)
+    if D >= 0:
+        # above or on the line
+        action = u_max
+    elif D < 0:
+        # below the line
+        action = u_min
     return action
 
 
@@ -94,8 +120,8 @@ if LOG_SCALE:
     #     (*np.maximum(1e-5, ax.get_xlim()), 500)
     # y_total_females = [np.linspace, np.geomspace][k] \
     #     (*np.maximum(1e-5, ax.get_ylim()), 500)
-    x_mms = np.concatenate(([0], np.geomspace(1e-5, 120 * K, 500)))
-    y_f = np.concatenate(([0], np.geomspace(1e-5, 120 * K, 500)))
+    x_mms = np.concatenate(([0.0001], np.geomspace(1e-5, 120 * K, 500)))
+    y_f = np.concatenate(([0.0001], np.geomspace(1e-5, 120 * K, 500)))
 else:
     x_mms = np.linspace(0, 120 * K, 100)
     y_f = np.linspace(0, 120 * K, 100)
@@ -130,7 +156,7 @@ if PLOT_TRAJ:
         while not done:
             action, _ = model.predict(state, deterministic=True)
             if USE_EXPLICIT_ACTION:
-                all_females = env.sim.y[2] * (1 + env.sim.gammas * env.sim.y[3] / env.sim.y[1])
+                all_females = env.sim.y[2] + env.sim.y[4]
                 mms = env.sim.y[1] + env.sim.y[3]
                 action = np.array([get_action(mms, all_females)], dtype=np.float64)
 
@@ -151,7 +177,8 @@ if PLOT_TRAJ:
 
         gammas = 1
         mms = y_lst[:, 1] + y_lst[:, 3]
-        all_females = y_lst[:, 2] * (1 + gammas * y_lst[:, 3] / y_lst[:, 1])
+        all_females = y_lst[:, 2] + y_lst[:, 4]  # DIFFERENT WITH 5 EQ
+        # all_females = y_lst[:, 2] * (1 + gammas * y_lst[:, 3] / y_lst[:, 1])
 
         n_steps_per_action = env_kwargs['config']['n_steps_per_action']
         # mms = mms[::n_steps_per_action]
@@ -184,7 +211,7 @@ cbar = fig.colorbar(pcm)
 cbar.ax.set_title('Action')
 
 plt.tight_layout()
-plt.savefig('heatmap.png')
+plt.savefig('heatmap_5eq.png')
 
 
 plt.figure(dpi=500, figsize=(8, 3))
@@ -192,7 +219,7 @@ plt.plot(t_lst[::700], actions) # 700 env steps = 1 week
 plt.xlabel('Time (days)')
 plt.ylabel('Control')
 plt.tight_layout()
-plt.savefig('actions.png')
+plt.savefig('actions_5eq.png')
 
 # plt.figure()
 # plt.plot(actions)

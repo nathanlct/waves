@@ -3,11 +3,14 @@ from multiprocessing import Pool
 import matplotlib.pyplot as plt
 import numpy as np
 
-from models.sim_ode_discrete import SimODEDiscrete
+import sys
+sys.path.append('..')
 
-sim = SimODEDiscrete(
+from models.sim_ode_discrete_5eq import SimODEDiscrete5Eq
+
+sim = SimODEDiscrete5Eq(
     K=50000.0,
-    y0=lambda x: np.random.uniform(low=0.0, high=10 * 50000, size=4),
+    y0=lambda x: np.random.uniform(low=0.0, high=10 * 50000, size=5),
     dt=1e-2,
 )
 
@@ -54,7 +57,7 @@ for i in range(n_sims):
     u_lst = []
     while sim.t <= tmax:
         total_males = sim.y[1] + sim.y[3]
-        total_females = sim.y[2] * (1 + sim.gammas * sim.y[3] / sim.y[1])
+        total_females = sim.y[2] * sim.y[4]
         action = get_action(total_males, total_females)
         u_lst.append(action)
         sim.step(u=[action])
@@ -100,4 +103,4 @@ for k in range(5):
     ax.set_ylabel(["E(t)", "M(t)", "F(t)", "M$_s$(t)", "u(t)"][k])
     ax.grid()
 plt.tight_layout()
-plt.savefig("distributions.png")
+plt.savefig("distributions_5eq.png")

@@ -6,11 +6,19 @@ from matplotlib.gridspec import GridSpec
 
 sys.path.append("..")
 
-from models.sim_ode_discrete import SimODEDiscrete
+# from models.sim_ode_discrete import SimODEDiscrete
 
-sim = SimODEDiscrete(
+# sim = SimODEDiscrete(
+#     K=50578.0,
+#     y0=lambda x: np.random.uniform(low=0.0, high=250000, size=4),
+#     dt=1e-2,
+# )
+
+from models.sim_ode_discrete_5eq import SimODEDiscrete5Eq
+
+sim = SimODEDiscrete5Eq(
     K=50578.0,
-    y0=lambda x: np.random.uniform(low=0.0, high=250000, size=4),
+    y0=lambda x: np.random.uniform(low=0.0, high=250000, size=5),
     dt=1e-2,
 )
 sim.reset()
@@ -49,12 +57,30 @@ sim.reset()
 #     return action
 
 
+# def get_action(total_males, total_females, u_min=0.0001, u_max=500000):
+#     if total_females == 0 or (total_males != 0 and np.log(total_males / total_females) > 4):
+#         action = u_min
+#     else:
+#         action = u_max  # limite 165435
+#     return action
+
+# try sth new: lets first define two points (x1,y1) and (x2,y2) -- (total_males, total_females) for my new boundary
+x1 = 1e-1
+y1 = 3.5
+x2 = 1e7
+y2 = 20
 def get_action(total_males, total_females, u_min=0.0001, u_max=500000):
-    if total_females == 0 or (total_males != 0 and np.log(total_males / total_females) > 4):
+    x3 = total_males
+    y3 = total_females
+    D = (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)
+    if D >= 0:
+        # above or on the line
+        action = u_max
+    elif D < 0:
+        # below the line
         action = u_min
-    else:
-        action = u_max  # limite 165435
     return action
+
 
 
 if False:
@@ -129,12 +155,14 @@ if True:
     u_mins = [0, 10**-3, 1, 5]
     u_max = 300000
     t_max = 2000
-    random_y0 = np.random.uniform(low=0.0, high=10 * 50000, size=4)
+    random_y0 = np.random.uniform(low=0.0, high=10 * 50000, size=5)
+    # random_y0 = np.random.uniform(low=0.0, high=10 * 50000, size=4)
 
     fig, axs = plt.subplots(len(u_mins), figsize=(12, 6), dpi=200)
 
     for i, u_min in enumerate(u_mins):
-        sim = SimODEDiscrete(K=50000.0, y0=lambda x: np.copy(random_y0), dt=1e-2)
+        sim = SimODEDiscrete5Eq(K=50000.0, y0=lambda x: np.copy(random_y0), dt=1e-2)
+        # sim = SimODEDiscrete(K=50000.0, y0=lambda x: np.copy(random_y0), dt=1e-2)
         sim.reset()
 
         current_t_lst = []
@@ -143,7 +171,8 @@ if True:
 
         while sim.t <= t_max:
             total_males = sim.y[1] + sim.y[3]
-            total_females = sim.y[2] * (1 + sim.gammas * sim.y[3] / sim.y[1])
+            total_females = sim.y[2] + sim.y[4]  # DIFFERENT WITH 5 EQ
+            # total_females = sim.y[2] * (1 + sim.gammas * sim.y[3] / sim.y[1])
 
             action = get_action(total_males, total_females, u_min, u_max)  # Replace 0, 0 with your logic
             sim.step(u=[action])
@@ -165,5 +194,5 @@ if True:
 
     axs[-1].set_xlabel("Time (s)")
     plt.tight_layout()
-    plt.savefig("norm_and_action_by_time_by_u_min.png")
+    plt.savefig("norm_and_action_by_time_by_u_min_5eq.png")
     # plt.show()
