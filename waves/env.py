@@ -111,7 +111,7 @@ class WavesEnv(gym.Env, ABC):
         return state
 
     def compute_reward(self, action):
-        return self.sim.reward()
+        return self.sim.reward(action)
 
     def reset_memory(self):
         self.memory = np.full(self.n_observations_base * self.mem_n_past_states,
