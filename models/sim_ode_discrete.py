@@ -14,31 +14,32 @@ Example training command
         --action_min 0 --action_max "10 * self.sim.K" --cpus 1 --steps 1e9
 """
 
-from waves.simulation import Simulation
-
 import numpy as np
+
+from waves.simulation import Simulation
 
 
 def normalize(x, xmin, xmax):
-    """Transform x from [xmin, xmax] range to [-1, 1] range.
-    """
+    """Transform x from [xmin, xmax] range to [-1, 1] range."""
     return (x - xmin) / (xmax - xmin) * 2.0 - 1.0
 
 
 class SimODEDiscrete(Simulation):
-    def __init__(self,
-                 K=50000.0,
-                 obs_time=False,
-                 obs_y=False,
-                 obs_y0=False,
-                 obs_MMS=False,
-                 obs_MS=False,
-                 obs_F=False,
-                 obs_all_females=False,
-                 rwd_y123=0,
-                 rwd_y4=0,
-                 rwd_y4_last100=0,
-                 **kwargs):
+    def __init__(
+        self,
+        K=50000.0,
+        obs_time=False,
+        obs_y=False,
+        obs_y0=False,
+        obs_MMS=False,
+        obs_MS=False,
+        obs_F=False,
+        obs_all_females=False,
+        rwd_y123=0,
+        rwd_y4=0,
+        rwd_y4_last100=0,
+        **kwargs,
+    ):
         """
         See parent class.
 
@@ -48,7 +49,7 @@ class SimODEDiscrete(Simulation):
         rwd_x: coefficient in front of the "x" term in the reward function (defaut 0 = don't add that term)
         """
         sim_params = {
-            "y0": lambda x: np.random.uniform(low=0.0, high=5*K, size=(len(x),)),
+            "y0": lambda x: np.random.uniform(low=0.0, high=5 * K, size=(len(x),)),
             # "y0": lambda x: np.array([50000, 63748, 153125, 0]),
             "dt": 1e-4,
             "dx": 1,
@@ -59,8 +60,7 @@ class SimODEDiscrete(Simulation):
         super().__init__(**sim_params)
 
         if self.xmin != 0 or self.xmax != 3 or self.dx != 1:
-            raise ValueError(
-                "xmin, xmax and dx cannot be modified in this simulation.")
+            raise ValueError("xmin, xmax and dx cannot be modified in this simulation.")
 
         self.K = K
 
@@ -86,8 +86,7 @@ class SimODEDiscrete(Simulation):
         self.gammas = 1  # preference d'accouplement de femelle avec les males fertiles
         self.betaE = 8  # taux de ponte
 
-        print(
-            f'Initializing simulation with K={K}, and state space of size {len(self.get_obs())}.')
+        # print(f"Initializing simulation with K={K}, and state space of size {len(self.get_obs())}.")
 
     @property
     def n_controls(self):
@@ -110,8 +109,7 @@ class SimODEDiscrete(Simulation):
             [
                 self.betaE * x[2] * (1 - (x[0] / self.K)) - (self.nuE + self.deltaE) * x[0],
                 (1 - self.nu) * self.nuE * x[0] - self.deltaM * x[1],
-                self.nu * self.nuE * x[0] *
-                (x[1] / (x[1] + (self.gammas * x[3]))) - self.deltaF * x[2],
+                self.nu * self.nuE * x[0] * (x[1] / (x[1] + (self.gammas * x[3]))) - self.deltaF * x[2],
                 u - self.deltaS * x[3],
             ]
         )
@@ -143,7 +141,7 @@ class SimODEDiscrete(Simulation):
             state.append(normalize(y[3], 0, 50 * self.K))
 
         if self.obs_MMS:
-            mms = kwargs.get('MMS', y[1] + y[3])
+            mms = kwargs.get("MMS", y[1] + y[3])
             state.append(normalize(mms, 0, 100 * self.K))
             state.append(normalize(min(mms, 50 * self.K), 0, 50 * self.K))
             state.append(normalize(min(mms, 10 * self.K), 0, 10 * self.K))
@@ -165,7 +163,7 @@ class SimODEDiscrete(Simulation):
 
         if self.obs_all_females:
             # F*(M+\gamma_s M_s)/M
-            all_females = kwargs.get('F', y[2] * (1 + self.gammas * y[3] / y[1]))
+            all_females = kwargs.get("F", y[2] * (1 + self.gammas * y[3] / y[1]))
             state.append(normalize(all_females, 0, 100 * self.K))
             state.append(normalize(min(all_females, 50 * self.K), 0, 50 * self.K))
             state.append(normalize(min(all_females, 10 * self.K), 0, 10 * self.K))
@@ -183,24 +181,23 @@ class SimODEDiscrete(Simulation):
 
         # penalize norm of first three states
         if self.rwd_y123 > 0:
-            rwd_y123 = - self.rwd_y123 * \
-                np.linalg.norm([self.y[0], self.y[1], self.y[2]]) / self.K
-            reward_info['rwd_y123'] = rwd_y123
+            rwd_y123 = -self.rwd_y123 * np.linalg.norm([self.y[0], self.y[1], self.y[2]]) / self.K
+            reward_info["rwd_y123"] = rwd_y123
             reward += rwd_y123
 
         # penalize (norm of) fourth state
         if self.rwd_y4 > 0:
-            rwd_y4 = - self.rwd_y4 * self.y[3] / self.K
-            reward_info['rwd_y4'] = rwd_y4
+            rwd_y4 = -self.rwd_y4 * self.y[3] / self.K
+            reward_info["rwd_y4"] = rwd_y4
             reward += rwd_y4
 
         # penalize fourth state in the last 100 seconds
         if self.rwd_y4_last100 > 0:
             if self.t > self.tmax - 100:
-                rwd_y4_last100 = - self.rwd_y4_last100 * self.y[3] / self.K
+                rwd_y4_last100 = -self.rwd_y4_last100 * self.y[3] / self.K
             else:
                 rwd_y4_last100 = 0
-            reward_info['rwd_y4_last100'] = rwd_y4_last100
+            reward_info["rwd_y4_last100"] = rwd_y4_last100
             reward += rwd_y4_last100
 
         return reward, reward_info
