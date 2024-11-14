@@ -16,6 +16,8 @@ from waves.callbacks import TensorboardCallback
 from waves.env import WavesEnv
 from waves.utils import create_log_dir, parse_env_args
 
+import wandb
+
 
 # parse CLI params
 parser = argparse.ArgumentParser()
@@ -80,6 +82,9 @@ parser.add_argument('--verbose', default=False, action='store_true',
 parser.add_argument('--checkpoint_interval', type=int, default=500000,
                     help='Every so many steps, a checkpoint of the model will be saved.')
 
+parser.add_argument('--track', action='store_true', default=False, help='If set, tracks the experiment on wandb.')
+parser.add_argument('--wandb_group', type=str, default=None, help='WandB group to group experiments together.')
+
 args = parser.parse_args()
 
 
@@ -122,6 +127,9 @@ if __name__ == '__main__':
         },
         device='cpu',
     )
+
+    if args.track:
+        wandb.init(entity='nathanlct', project="moustiques", group=args.wandb_group, sync_tensorboard=True, config=args)
 
     # create callbacks
     checkpoint_callback = CheckpointCallback(
