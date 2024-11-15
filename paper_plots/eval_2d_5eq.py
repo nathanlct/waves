@@ -18,9 +18,10 @@ from waves.utils import parse_env_args
 # PATH = 'logs/train/1683042542_02May23_08h49m02s/checkpoints/model_500000_steps.zip'
 # PATH = 'logs/train/1683042542_02May23_08h49m02s/checkpoints/model_4000000_steps.zip'
 # PATH = '/Users/nathan/dev/moustiques_paper/1691464761_07Aug23_20h19m21s/checkpoints/model_2999970_steps.zip'  # latest model in paper
-PATH = '/Users/nathan/dev/waves/logs/train/1731086720_08Nov24_18h25m20s/checkpoints/model_3000000_steps.zip'  # model trained with 5 equations
+# PATH = '/Users/nathan/dev/waves/logs/train/1731086720_08Nov24_18h25m20s/checkpoints/model_3000000_steps.zip'  # model trained with 5 equations
+PATH = '/Users/nathan/dev/waves/logs/logs/train/1731617355_14Nov24_21h49m15s/checkpoints/model_3000000_steps.zip'
 LOG_SCALE = True
-USE_EXPLICIT_ACTION = True # True
+USE_EXPLICIT_ACTION = False # True
 ACTION_NOISE_STD = 0  # 10
 PLOT_TRAJ = True
 
