@@ -65,22 +65,25 @@ sim.reset()
 #     return action
 
 # try sth new: lets first define two points (x1,y1) and (x2,y2) -- (total_males, total_females) for my new boundary
-x1 = 1e-1
-y1 = 3.5
-x2 = 1e7
-y2 = 20
-def get_action(total_males, total_females, u_min=0.0001, u_max=500000):
-    x3 = total_males
-    y3 = total_females
-    D = (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)
-    if D >= 0:
-        # above or on the line
-        action = u_max
-    elif D < 0:
-        # below the line
-        action = u_min
-    return action
+# x1 = 1e-1
+# y1 = 3.5
+# x2 = 1e7
+# y2 = 20
+# def get_action(total_males, total_females, u_min=0.0001, u_max=500000):
+#     x3 = total_males
+#     y3 = total_females
+#     D = (x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1)
+#     if D >= 0:
+#         # above or on the line
+#         action = u_max
+#     elif D < 0:
+#         # below the line
+#         action = u_min
+#     return action
 
+
+def get_action(total_males, total_females, u_min=0.0001, u_max=500000):
+    return u_min if np.log(total_males / total_females) > 4 else u_max
 
 
 if False:
@@ -150,10 +153,12 @@ if False:
 if True:
 
     def compute_norm_sum(y):
-        return np.linalg.norm(y[0]) + np.linalg.norm(y[1]) + np.linalg.norm(y[2])
+        # return (sim.y[2] + sim.y[4]) / (sim.y[2] * (1 + sim.gammas * sim.y[3] / sim.y[1]))
+        return (y[4] / y[2]) / (y[3] / y[1])
+        return np.linalg.norm(y[0]) + np.linalg.norm(y[1]) + np.linalg.norm(y[2]) + np.linalg.norm(y[3]) + np.linalg.norm(y[4])
 
     u_mins = [0, 10**-3, 1, 5]
-    u_max = 300000
+    u_max = 300_000
     t_max = 2000
     random_y0 = np.random.uniform(low=0.0, high=10 * 50000, size=5)
     # random_y0 = np.random.uniform(low=0.0, high=10 * 50000, size=4)
@@ -181,8 +186,12 @@ if True:
             current_norm_EFM_lst.append(compute_norm_sum(sim.y))
             current_u_lst.append(action)
 
+        print(sim.y)
+        print(current_norm_EFM_lst[-1])
+
         axs[i].plot(current_t_lst, current_norm_EFM_lst, label=r"$\|E(t), M(t), F(t)\|_2$", color="blue", zorder=1)
-        axs[i].set_ylabel(r"$\|E(t), M(t), F(t)\|_2$", color="blue")
+        axs[i].set_ylabel(r"$(F_s/F)/(M_s/M)$", color="blue")
+        # axs[i].set_ylabel(r"$\|E(t), M(t), F(t)\|_2$", color="blue")
         axs[i].tick_params(axis="y", labelcolor="blue")
         axs[i].grid(True)
 

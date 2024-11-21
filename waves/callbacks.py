@@ -60,6 +60,7 @@ class TensorboardCallback(BaseCallback):
         # LOG SCALARS
         self.logger.record('eval/norm_y0', np.linalg.norm(y_lst[0]))
         self.logger.record('eval/norm_yf', np.linalg.norm(y_lst[-1]))
+        self.logger.record('eval/norm_yf_max1000', min(1000, np.linalg.norm(y_lst[-1])))
         self.logger.record('eval/cum_reward', np.sum(rewards))
 
         # LOG PLOTS

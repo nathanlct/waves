@@ -115,11 +115,11 @@ class SimODEDiscrete5Eq(Simulation):
         assert len(x) == 5
         return np.array(
             [
-                self.betaE * x[2] * (1 - (x[0] / self.K)) - (self.nuE + self.deltaE) * x[0],
-                (1 - self.nu) * self.nuE * x[0] - self.deltaM * x[1],
-                self.nu * self.nuE * x[0] * (x[1] / (x[1] + (self.gammas * x[3]))) - self.deltaF * x[2],
-                u - self.deltaS * x[3],
-                self.nu * self.nuE * (x[3] /  (x[1] + (self.gammas * x[3]))) - self.deltaF * x[4],
+                self.betaE * x[2] * (1 - (x[0] / self.K)) - (self.nuE + self.deltaE) * x[0],                # \dot E   (0)
+                (1 - self.nu) * self.nuE * x[0] - self.deltaM * x[1],                                       # \dot M   (1)         
+                self.nu * self.nuE * x[0] * (x[1] / (x[1] + (self.gammas * x[3]))) - self.deltaF * x[2],    # \dot F   (2)
+                u - self.deltaS * x[3],                                                                     # \dot M_s (3)
+                self.nu * self.nuE * x[0] * (self.gammas * x[3] /  (x[1] + (self.gammas * x[3]))) - self.deltaF * x[4],   # \dot F_s (4)
             ]
         )
 
