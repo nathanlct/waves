@@ -42,6 +42,7 @@ class SimODEDiscrete5Eq(Simulation):
         rwd_y4_last100=0,
         rwd_y5=0,
         rwd_u=0,
+        rwd_type='default',
         **kwargs,
     ):
         """
@@ -82,6 +83,10 @@ class SimODEDiscrete5Eq(Simulation):
         self.rwd_y4_last100 = rwd_y4_last100
         self.rwd_y5 = rwd_y5
         self.rwd_u = rwd_u
+        self.rwd_type = rwd_type.lower()
+        assert self.rwd_type in ['default', 'delta']
+
+        self.prev_y = None  # for "delta" rwd_type
 
         # model parameters
         self.nu = 0.49  # caractere de differentiation
@@ -190,40 +195,54 @@ class SimODEDiscrete5Eq(Simulation):
         reward = 0
         reward_info = {}
 
-        # penalize norm of first three states and last state
-        if self.rwd_y1 > 0:
-            rwd_y1 = -self.rwd_y1 * self.y[0] / self.K
-            reward_info["rwd_y1"] = rwd_y1
-            reward += rwd_y1
-        if self.rwd_y2 > 0:
-            rwd_y2 = -self.rwd_y2 * self.y[1] / self.K
-            reward_info["rwd_y2"] = rwd_y2
-            reward += rwd_y2
-        if self.rwd_y3 > 0:
-            rwd_y3 = -self.rwd_y3 * self.y[2] / self.K
-            reward_info["rwd_y3"] = rwd_y3
-            reward += rwd_y3
-        if self.rwd_y4 > 0:
-            rwd_y4 = -self.rwd_y4 * self.y[3] / self.K
-            reward_info["rwd_y4"] = rwd_y4
-            reward += rwd_y4
-        if self.rwd_y5 > 0:
-            rwd_y5 = -self.rwd_y5 * self.y[4] / self.K
-            reward_info["rwd_y5"] = rwd_y5
-            reward += rwd_y5
-        
-        if self.rwd_u > 0:
-            rwd_u = -self.rwd_u * float(action) / self.K
-            reward_info["rwd_u"] = rwd_u
-            reward += rwd_u
+        if self.rwd_type == 'default':
+            # penalize norm of first three states and last state
+            if self.rwd_y1 > 0:
+                rwd_y1 = -self.rwd_y1 * self.y[0] / self.K
+                reward_info["rwd_y1"] = rwd_y1
+                reward += rwd_y1
+            if self.rwd_y2 > 0:
+                rwd_y2 = -self.rwd_y2 * self.y[1] / self.K
+                reward_info["rwd_y2"] = rwd_y2
+                reward += rwd_y2
+            if self.rwd_y3 > 0:
+                rwd_y3 = -self.rwd_y3 * self.y[2] / self.K
+                reward_info["rwd_y3"] = rwd_y3
+                reward += rwd_y3
+            if self.rwd_y4 > 0:
+                rwd_y4 = -self.rwd_y4 * self.y[3] / self.K
+                reward_info["rwd_y4"] = rwd_y4
+                reward += rwd_y4
+            if self.rwd_y5 > 0:
+                rwd_y5 = -self.rwd_y5 * self.y[4] / self.K
+                reward_info["rwd_y5"] = rwd_y5
+                reward += rwd_y5
+            
+            if self.rwd_u > 0:
+                rwd_u = -self.rwd_u * float(action) / self.K
+                reward_info["rwd_u"] = rwd_u
+                reward += rwd_u
 
-        # penalize fourth state in the last 100 seconds
-        if self.rwd_y4_last100 > 0:
-            if self.t > self.tmax - 100:
-                rwd_y4_last100 = -self.rwd_y4_last100 * self.y[3] / self.K
-            else:
-                rwd_y4_last100 = 0
-            reward_info["rwd_y4_last100"] = rwd_y4_last100
-            reward += rwd_y4_last100
+            # penalize fourth state in the last 100 seconds
+            if self.rwd_y4_last100 > 0:
+                if self.t > self.tmax - 100:
+                    rwd_y4_last100 = -self.rwd_y4_last100 * self.y[3] / self.K
+                else:
+                    rwd_y4_last100 = 0
+                reward_info["rwd_y4_last100"] = rwd_y4_last100
+                reward += rwd_y4_last100
+        elif self.rwd_type == 'delta':
+            if self.prev_y is None:
+                self.prev_y = np.copy(self.y)
+
+            for i in range(5):
+                rwd = 1 if self.y[i] < self.prev_y[i] else -1
+                reward_info[f'rwd_y{i+1}'] = rwd
+                reward += rwd
+
+            reward /= 5
+
+            self.prev_y = np.copy(self.y)
+
 
         return reward, reward_info
