@@ -235,12 +235,18 @@ class SimODEDiscrete5Eq(Simulation):
             if self.prev_y is None:
                 self.prev_y = np.copy(self.y)
 
+            # state delta
             for i in range(5):
-                rwd = 1 if self.y[i] < self.prev_y[i] else -1
+                rwd = 1 if self.y[i] < self.prev_y[i] else -1 # - 4 * (self.t / self.tmax)
                 reward_info[f'rwd_y{i+1}'] = rwd
                 reward += rwd
 
-            reward /= 5
+            # action penalty
+            reward -= self.rwd_u * float(action) / 500_000
+            reward -= self.rwd_y4 * min(self.y[3], 100_000) / 100_000
+
+            # normalize
+            reward /= 20
 
             self.prev_y = np.copy(self.y)
 
