@@ -19,7 +19,13 @@ from waves.utils import parse_env_args
 # PATH = 'logs/train/1683042542_02May23_08h49m02s/checkpoints/model_4000000_steps.zip'
 # PATH = '/Users/nathan/dev/moustiques_paper/1691464761_07Aug23_20h19m21s/checkpoints/model_2999970_steps.zip'  # latest model in paper
 # PATH = '/Users/nathan/dev/waves/logs/train/1731086720_08Nov24_18h25m20s/checkpoints/model_3000000_steps.zip'  # model trained with 5 equations
-PATH = './model.zip'  # '/Users/nathan/dev/waves/logs/logs/train/1731617355_14Nov24_21h49m15s/checkpoints/model_3000000_steps.zip'
+# PATH = './model.zip'  # '/Users/nathan/dev/waves/logs/logs/train/1731617355_14Nov24_21h49m15s/checkpoints/model_3000000_steps.zip'
+
+PATH = '/Users/nathan/dev/waves/logs/train/1732211525_21Nov24_18h52m05s/checkpoints/model_500000_steps.zip'
+# PATH = '/Users/nathan/dev/waves/logs/train/1732051515_19Nov24_22h25m15s/checkpoints/model_7000000_steps.zip'
+# PATH = '/Users/nathan/dev/waves/logs/train/1732115183_20Nov24_16h06m23s/checkpoints/model_2000000_steps.zip'
+# PATH = '/Users/nathan/dev/waves/logs/train/1732051515_19Nov24_22h25m15s/checkpoints/model_7000000_steps.zip'
+
 LOG_SCALE = True
 USE_EXPLICIT_ACTION = False # True
 ACTION_NOISE_STD = 0  # 10
@@ -112,8 +118,9 @@ def f(MMS, F, env):
 # create env
 env = WavesEnv(**env_kwargs)
 env.tmax = 5000
-# env.n_steps_per_action = 1
+env.n_steps_per_action = 1
 
+mesh_size = 100  # 500
 # Create a mesh grid
 K = 50578.0
 if LOG_SCALE:
@@ -121,8 +128,8 @@ if LOG_SCALE:
     #     (*np.maximum(1e-5, ax.get_xlim()), 500)
     # y_total_females = [np.linspace, np.geomspace][k] \
     #     (*np.maximum(1e-5, ax.get_ylim()), 500)
-    x_mms = np.concatenate(([0.0001], np.geomspace(1e-5, 120 * K, 500)))
-    y_f = np.concatenate(([0.0001], np.geomspace(1e-5, 120 * K, 500)))
+    x_mms = np.concatenate(([0.0001], np.geomspace(1e-5, 120 * K, mesh_size)))
+    y_f = np.concatenate(([0.0001], np.geomspace(1e-5, 120 * K, mesh_size)))
 else:
     x_mms = np.linspace(0, 120 * K, 100)
     y_f = np.linspace(0, 120 * K, 100)
@@ -214,13 +221,36 @@ cbar.ax.set_title('Action')
 plt.tight_layout()
 plt.savefig('heatmap_5eq.png')
 
-
-plt.figure(dpi=500, figsize=(8, 3))
-plt.plot(t_lst[::700], actions) # 700 env steps = 1 week
-plt.xlabel('Time (days)')
-plt.ylabel('Control')
-plt.tight_layout()
-plt.savefig('actions_5eq.png')
+if PLOT_TRAJ:
+    # fig, axes = plt.subplots(nrows=6, ncols=1, figsize=(8, 3*6), dpi=200)
+    fig, ax = plt.subplots(dpi=200, figsize=(8, 3))
+    for i in range(5):
+        ax.plot(t_lst[::700], y_lst[::700,i], label=f'y{i+1}', color='C0')
+    ax.set_xlabel('Time (days)')
+    ax.set_ylabel('States', color='C0')
+    ax.set_yscale('log')
+    ax.tick_params(axis="y", labelcolor="C0")
+    ax2 = ax.twinx()
+    ax2.plot(t_lst[::700], actions, label='Control', color='C1', zorder=2, linestyle='--')
+    ax2.set_ylabel('Control', color='C1')
+    ax2.set_yscale('log')
+    ax2.tick_params(axis="y", labelcolor="C1")
+    # ax.legend()
+    plt.tight_layout()
+    plt.savefig('heatmap_states_5eq.png')
+    # axes[0].plot(t_lst[::700], actions) # 700 env steps = 1 week
+    # axes[0].set_ylabel('Control')
+    # axes[0].set_xlabel('Time (days)')
+    # axes[0].grid()
+    # axes[0].set_yscale('log')
+    # for i in range(5):
+    #     axes[1+i].plot(t_lst[::700], y_lst[::700,i]) # 700 env steps = 1 week
+    #     axes[1+i].set_ylabel(f'State y{i+1}')
+    #     axes[1+i].set_xlabel('Time (days)')
+    #     axes[1+i].grid()
+    #     axes[1+i].set_yscale('log')
+    # plt.tight_layout()
+    # plt.savefig('heatmap_states_5eq.png')
 
 # plt.figure()
 # plt.plot(actions)
