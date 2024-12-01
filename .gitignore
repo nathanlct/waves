@@ -3,3 +3,4 @@ logs/
 *.pyc
 *.gif
 *.mp4
+wandb/

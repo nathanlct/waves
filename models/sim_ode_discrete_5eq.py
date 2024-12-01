@@ -1,6 +1,6 @@
 """
 Simulating
-    y'(t) = f(y(t), u(t)) avec y(t) = (y_1(t), y_2(t), y_3(t), y_4(t))
+    y'(t) = f(y(t), u(t)) avec y(t) = (y_1(t), y_2(t), y_3(t), y_4(t), y_5(t))
 Boundary conditions
     Initial condition choosen randomly in [0, K]^4
 Observations
@@ -24,7 +24,7 @@ def normalize(x, xmin, xmax):
     return (x - xmin) / (xmax - xmin) * 2.0 - 1.0
 
 
-class SimODEDiscrete(Simulation):
+class SimODEDiscrete5Eq(Simulation):
     def __init__(
         self,
         K=50000.0,
@@ -35,9 +35,14 @@ class SimODEDiscrete(Simulation):
         obs_MS=False,
         obs_F=False,
         obs_all_females=False,
-        rwd_y123=0,
+        rwd_y1=0,
+        rwd_y2=0,
+        rwd_y3=0,
         rwd_y4=0,
         rwd_y4_last100=0,
+        rwd_y5=0,
+        rwd_u=0,
+        rwd_type='default',
         **kwargs,
     ):
         """
@@ -54,12 +59,12 @@ class SimODEDiscrete(Simulation):
             "dt": 1e-4,
             "dx": 1,
             "xmin": 0,
-            "xmax": 3,
+            "xmax": 4,
         }
         sim_params.update(kwargs)
         super().__init__(**sim_params)
 
-        if self.xmin != 0 or self.xmax != 3 or self.dx != 1:
+        if self.xmin != 0 or self.xmax != 4 or self.dx != 1:
             raise ValueError("xmin, xmax and dx cannot be modified in this simulation.")
 
         self.K = K
@@ -71,9 +76,17 @@ class SimODEDiscrete(Simulation):
         self.obs_MS = obs_MS
         self.obs_F = obs_F
         self.obs_all_females = obs_all_females
-        self.rwd_y123 = rwd_y123
+        self.rwd_y1 = rwd_y1
+        self.rwd_y2 = rwd_y2
+        self.rwd_y3 = rwd_y3
         self.rwd_y4 = rwd_y4
         self.rwd_y4_last100 = rwd_y4_last100
+        self.rwd_y5 = rwd_y5
+        self.rwd_u = rwd_u
+        self.rwd_type = rwd_type.lower()
+        assert self.rwd_type in ['default', 'delta']
+
+        self.prev_y = None  # for "delta" rwd_type
 
         # model parameters
         self.nu = 0.49  # caractere de differentiation
@@ -92,7 +105,7 @@ class SimODEDiscrete(Simulation):
     def n_controls(self):
         return 1
 
-    def dynamics(self, x=[0, 0, 0, 0], u=[0]):
+    def dynamics(self, x=[0, 0, 0, 0, 0], u=[0]):
         """
         Dynamic of the system
         """
@@ -104,13 +117,14 @@ class SimODEDiscrete(Simulation):
         # y0 = self.y_lst[0]
         # K = (1 / (1 - ((deltaF * a) / c))) * y0[0]
 
-        assert len(x) == 4
+        assert len(x) == 5
         return np.array(
             [
-                self.betaE * x[2] * (1 - (x[0] / self.K)) - (self.nuE + self.deltaE) * x[0],
-                (1 - self.nu) * self.nuE * x[0] - self.deltaM * x[1],
-                self.nu * self.nuE * x[0] * (x[1] / (x[1] + (self.gammas * x[3]))) - self.deltaF * x[2],
-                u - self.deltaS * x[3],
+                self.betaE * x[2] * (1 - (x[0] / self.K)) - (self.nuE + self.deltaE) * x[0],                # \dot E   (0)
+                (1 - self.nu) * self.nuE * x[0] - self.deltaM * x[1],                                       # \dot M   (1)         
+                self.nu * self.nuE * x[0] * (x[1] / (x[1] + (self.gammas * x[3]))) - self.deltaF * x[2],    # \dot F   (2)
+                u - self.deltaS * x[3],                                                                     # \dot M_s (3)
+                self.nu * self.nuE * x[0] * (self.gammas * x[3] /  (x[1] + (self.gammas * x[3]))) - self.deltaF * x[4],   # \dot F_s (4)
             ]
         )
 
@@ -131,14 +145,16 @@ class SimODEDiscrete(Simulation):
             state.append(normalize(y[1], 0, 2 * self.K))
             state.append(normalize(y[2], 0, 2 * self.K))
             # TODO y[3] can reach much larger values
-            # we should probably enforce a max to make sure the observations don't blow
+            # we should probably enforce a max to make sure the observations don't blow up
             state.append(normalize(y[3], 0, 50 * self.K))
+            state.append(normalize(y[4], 0, 50 * self.K))
 
         if self.obs_y0:
             state.append(normalize(y[0], 0, 2 * self.K))
             state.append(normalize(y[1], 0, 2 * self.K))
             state.append(normalize(y[2], 0, 2 * self.K))
             state.append(normalize(y[3], 0, 50 * self.K))
+            state.append(normalize(y[4], 0, 50 * self.K))
 
         if self.obs_MMS:
             mms = kwargs.get("MMS", y[1] + y[3])
@@ -163,7 +179,7 @@ class SimODEDiscrete(Simulation):
 
         if self.obs_all_females:
             # F*(M+\gamma_s M_s)/M
-            all_females = kwargs.get("F", y[2] * (1 + self.gammas * y[3] / y[1]))
+            all_females = kwargs.get('F', y[2] + y[4])
             state.append(normalize(all_females, 0, 100 * self.K))
             state.append(normalize(min(all_females, 50 * self.K), 0, 50 * self.K))
             state.append(normalize(min(all_females, 10 * self.K), 0, 10 * self.K))
@@ -175,29 +191,64 @@ class SimODEDiscrete(Simulation):
 
         return np.array(state)
 
-    def reward(self):
+    def reward(self, action):
         reward = 0
         reward_info = {}
 
-        # penalize norm of first three states
-        if self.rwd_y123 > 0:
-            rwd_y123 = -self.rwd_y123 * np.linalg.norm([self.y[0], self.y[1], self.y[2]]) / self.K
-            reward_info["rwd_y123"] = rwd_y123
-            reward += rwd_y123
+        if self.rwd_type == 'default':
+            # penalize norm of first three states and last state
+            if self.rwd_y1 > 0:
+                rwd_y1 = -self.rwd_y1 * self.y[0] / self.K
+                reward_info["rwd_y1"] = rwd_y1
+                reward += rwd_y1
+            if self.rwd_y2 > 0:
+                rwd_y2 = -self.rwd_y2 * self.y[1] / self.K
+                reward_info["rwd_y2"] = rwd_y2
+                reward += rwd_y2
+            if self.rwd_y3 > 0:
+                rwd_y3 = -self.rwd_y3 * self.y[2] / self.K
+                reward_info["rwd_y3"] = rwd_y3
+                reward += rwd_y3
+            if self.rwd_y4 > 0:
+                rwd_y4 = -self.rwd_y4 * self.y[3] / self.K
+                reward_info["rwd_y4"] = rwd_y4
+                reward += rwd_y4
+            if self.rwd_y5 > 0:
+                rwd_y5 = -self.rwd_y5 * self.y[4] / self.K
+                reward_info["rwd_y5"] = rwd_y5
+                reward += rwd_y5
+            
+            if self.rwd_u > 0:
+                rwd_u = -self.rwd_u * float(action) / self.K
+                reward_info["rwd_u"] = rwd_u
+                reward += rwd_u
 
-        # penalize (norm of) fourth state
-        if self.rwd_y4 > 0:
-            rwd_y4 = -self.rwd_y4 * self.y[3] / self.K
-            reward_info["rwd_y4"] = rwd_y4
-            reward += rwd_y4
+            # penalize fourth state in the last 100 seconds
+            if self.rwd_y4_last100 > 0:
+                if self.t > self.tmax - 100:
+                    rwd_y4_last100 = -self.rwd_y4_last100 * self.y[3] / self.K
+                else:
+                    rwd_y4_last100 = 0
+                reward_info["rwd_y4_last100"] = rwd_y4_last100
+                reward += rwd_y4_last100
+        elif self.rwd_type == 'delta':
+            if self.prev_y is None:
+                self.prev_y = np.copy(self.y)
 
-        # penalize fourth state in the last 100 seconds
-        if self.rwd_y4_last100 > 0:
-            if self.t > self.tmax - 100:
-                rwd_y4_last100 = -self.rwd_y4_last100 * self.y[3] / self.K
-            else:
-                rwd_y4_last100 = 0
-            reward_info["rwd_y4_last100"] = rwd_y4_last100
-            reward += rwd_y4_last100
+            # state delta
+            for i in range(5):
+                rwd = 1 if self.y[i] < self.prev_y[i] else -1 # - 4 * (self.t / self.tmax)
+                reward_info[f'rwd_y{i+1}'] = rwd
+                reward += rwd
+
+            # action penalty
+            reward -= self.rwd_u * float(action) / 500_000
+            reward -= self.rwd_y4 * min(self.y[3], 100_000) / 100_000
+
+            # normalize
+            reward /= 20
+
+            self.prev_y = np.copy(self.y)
+
 
         return reward, reward_info
