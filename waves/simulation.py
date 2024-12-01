@@ -9,7 +9,7 @@ from abc import ABC
 class Simulation(ABC):
     def __init__(self, dt, dx, xmin, xmax, y0=None, y0_generator=None, tmax=None):
         """Initialize the simulation.
-        
+
         dt: time delta (in seconds)
         dx: space delta
         xmin: space lower bound
@@ -50,10 +50,10 @@ class Simulation(ABC):
 
         # reset counters
         self.t = 0
-        
+
         # reset initial
         self.x = np.arange(self.xmin, self.xmax + 1e-9, self.dx)
-        
+
         # create initial condition, try using function in a vectorized way otherwise create elements one by one
         try:
             self.y = np.array(self.y0(self.x))
@@ -109,7 +109,15 @@ class Simulation(ABC):
             curves = []
             for i in range(len(self.y_lst[0])):
                 curves.append([val[i] for val in self.y_lst])
-            for curve in curves:
+            # plt.plot(
+            #     self.t_lst,
+            #     [
+            #         (curves[3][i] + curves[1][i]) / curves[1][i]
+            #         for i in range(len(curves[1]))
+            #     ],
+            # )
+            # for i, curve in enumerate(curves[:-1]):
+            for i, curve in enumerate(curves):
                 plt.plot(self.t_lst, curve)
             plt.show()
             return None

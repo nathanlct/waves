@@ -4,6 +4,8 @@ from collections import defaultdict
 
 from stable_baselines3.common.callbacks import BaseCallback
 from stable_baselines3.common.logger import Figure
+import matplotlib
+matplotlib.use('agg')
 
 
 class TensorboardCallback(BaseCallback):
@@ -75,7 +77,7 @@ class TensorboardCallback(BaseCallback):
             plt.tight_layout()
             self.logger.record(f'eval/{name}', Figure(fig, close=True),
                                exclude=('stdout', 'log', 'json', 'csv'))
-            plt.close()
+            plt.close(fig)
 
         # y0 and yf by x
         plot('y0_yf_by_x', x_lst, {'y0': y_lst[0], 'yf': y_lst[-1]},
